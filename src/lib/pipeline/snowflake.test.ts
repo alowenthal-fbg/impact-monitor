@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { transformRows, type SnowflakeApiResponse } from './snowflake';
+import { transformRows, parseCsvOutput, buildSql, type SnowflakeApiResponse } from './snowflake';
 
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
@@ -11,13 +11,14 @@ vi.mock('../supabase/server', () => ({
   }),
 }));
 
+// Default: API mode (credentials present)
 vi.stubEnv('SNOWFLAKE_ACCOUNT', 'VYB11067.us-east-1');
 vi.stubEnv('SNOWFLAKE_USER', 'testuser');
 vi.stubEnv('SNOWFLAKE_PASSWORD', 'testpass');
 vi.stubEnv('SNOWFLAKE_DATABASE', 'FDE');
 vi.stubEnv('SNOWFLAKE_WAREHOUSE', 'FDE_LOYALTY_ANALYST_LG_WH');
 
-const sampleResponse: SnowflakeApiResponse = {
+const sampleApiResponse: SnowflakeApiResponse = {
   resultSetMetaData: {
     rowType: [
       { name: 'METRIC_DATE', type: 'date', nullable: false },
@@ -33,13 +34,45 @@ const sampleResponse: SnowflakeApiResponse = {
   statementHandle: 'stmt-123',
 };
 
-function mockSuccessResponse(data: SnowflakeApiResponse = sampleResponse) {
+function mockSuccessResponse(data: SnowflakeApiResponse = sampleApiResponse) {
   return { ok: true, status: 200, json: () => Promise.resolve(data) };
 }
 
+describe('buildSql', () => {
+  it('builds SQL with correct table and date range', () => {
+    const sql = buildSql('2026-04-20', '2026-04-26');
+    expect(sql).toContain('FANAPP.REPORTING.FANAPP_METRICS_DAILY_ALL_V2');
+    expect(sql).toContain("'2026-04-20'");
+    expect(sql).toContain("'2026-04-26'");
+    expect(sql).toContain('AMPLITUDE_EVENT_DATE');
+  });
+
+  it('rejects invalid date format', () => {
+    expect(() => buildSql('2026-04-20; DROP TABLE', '2026-04-26')).toThrow('Invalid date format');
+    expect(() => buildSql('2026-04-20', 'bad')).toThrow('Invalid date format');
+  });
+});
+
+describe('parseCsvOutput', () => {
+  it('parses snow CLI CSV output skipping header', () => {
+    const csv = 'METRIC_DATE,FACE_VALUE,GROSS_PROFIT,TICKETS_PURCHASED\n2026-04-20,1250.00,450.00,10\n2026-04-21,2300.50,820.25,18';
+    const rows = parseCsvOutput(csv);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toEqual(['2026-04-20', '1250.00', '450.00', '10']);
+  });
+
+  it('returns empty for header-only output', () => {
+    expect(parseCsvOutput('METRIC_DATE,FACE_VALUE')).toEqual([]);
+  });
+
+  it('returns empty for empty string', () => {
+    expect(parseCsvOutput('')).toEqual([]);
+  });
+});
+
 describe('transformRows', () => {
   it('maps Snowflake rows to daily metric format', () => {
-    const rows = transformRows(sampleResponse.data!);
+    const rows = transformRows(sampleApiResponse.data!);
     expect(rows).toHaveLength(2);
     expect(rows[0]).toEqual({
       metric_date: '2026-04-20',
@@ -74,7 +107,7 @@ describe('transformRows', () => {
   });
 });
 
-describe('fetchSnowflakeData', () => {
+describe('fetchSnowflakeData (API mode)', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     mockUpsert.mockReset();
@@ -92,7 +125,10 @@ describe('fetchSnowflakeData', () => {
     const [url, options] = mockFetch.mock.calls[0];
     expect(url).toContain('snowflakecomputing.com/api/v2/statements');
     expect(options.method).toBe('POST');
-    expect(JSON.parse(options.body).warehouse).toBe('FDE_LOYALTY_ANALYST_LG_WH');
+
+    const body = JSON.parse(options.body);
+    expect(body.warehouse).toBe('FDE_LOYALTY_ANALYST_LG_WH');
+    expect(body.statement).toContain('FANAPP_METRICS_DAILY_ALL_V2');
 
     expect(mockUpsert).toHaveBeenCalledTimes(1);
     const [rows, upsertOpts] = mockUpsert.mock.calls[0];
@@ -103,7 +139,7 @@ describe('fetchSnowflakeData', () => {
 
   it('skips upsert when no data returned', async () => {
     mockFetch.mockResolvedValueOnce(
-      mockSuccessResponse({ ...sampleResponse, data: [] })
+      mockSuccessResponse({ ...sampleApiResponse, data: [] })
     );
 
     const { fetchSnowflakeData } = await import('./snowflake');
@@ -124,7 +160,6 @@ describe('fetchSnowflakeData', () => {
       fetchSnowflakeData({ startDate: '2026-04-20', endDate: '2026-04-26' })
     ).rejects.toThrow('Snowflake auth failed');
 
-    // Auth errors should not be retried — only 1 fetch call
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
@@ -178,7 +213,7 @@ describe('fetchSnowflakeData', () => {
       json: () =>
         Promise.resolve({
           code: '002003',
-          message: "Object 'PFI_ECOSYSTEM_DAILY_ACTIVITY' does not exist.",
+          message: "Object does not exist.",
         }),
     });
 
@@ -189,7 +224,6 @@ describe('fetchSnowflakeData', () => {
   });
 
   it('polls for async query results', async () => {
-    // Initial POST returns handle without data
     mockFetch.mockResolvedValueOnce(
       mockSuccessResponse({
         statementHandle: 'stmt-async',
@@ -198,8 +232,7 @@ describe('fetchSnowflakeData', () => {
         code: '090001',
       })
     );
-    // Poll returns data
-    mockFetch.mockResolvedValueOnce(mockSuccessResponse(sampleResponse));
+    mockFetch.mockResolvedValueOnce(mockSuccessResponse(sampleApiResponse));
 
     const { fetchSnowflakeData } = await import('./snowflake');
     await fetchSnowflakeData({ startDate: '2026-04-20', endDate: '2026-04-26' });
