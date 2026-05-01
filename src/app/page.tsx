@@ -3,9 +3,13 @@
 import { useState } from 'react';
 import { KPICard } from '@/components/kpi-card';
 import { WeekSelector } from '@/components/week-selector';
+import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
+import { SportBreakdown } from '@/components/sport-breakdown';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
+import { useTrendData } from '@/hooks/use-trend-data';
+import { useDailyData } from '@/hooks/use-daily-data';
 import { getCurrentWeek } from '@/lib/utils/week';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 
 function getCurrentWeekStr(): string {
   return format(getCurrentWeek(), 'yyyy-MM-dd');
@@ -21,7 +25,11 @@ export default function DashboardPage() {
     ? selectedWeek
     : weeks?.[0] ?? selectedWeek;
 
-  const { data, isLoading, error } = useWeeklyData(effectiveWeek, currentWeekStart);
+  const weekEnd = format(addDays(new Date(effectiveWeek + 'T00:00:00'), 6), 'yyyy-MM-dd');
+
+  const { data: kpiData, isLoading: kpiLoading, error } = useWeeklyData(effectiveWeek, currentWeekStart);
+  const { data: trendData, isLoading: trendLoading } = useTrendData();
+  const { data: sportData, isLoading: sportLoading } = useDailyData(effectiveWeek, weekEnd);
 
   return (
     <div className="flex min-h-screen flex-col p-8">
@@ -43,31 +51,52 @@ export default function DashboardPage() {
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Total Tickets Sold"
-          value={data?.totalTickets ?? 0}
+          value={kpiData?.totalTickets ?? 0}
           unit="tickets"
-          wowDelta={data?.ticketsWow ?? null}
-          isLoading={isLoading}
+          wowDelta={kpiData?.ticketsWow ?? null}
+          isLoading={kpiLoading}
         />
         <KPICard
           title="Total Orders"
-          value={data?.totalOrders ?? 0}
+          value={kpiData?.totalOrders ?? 0}
           unit="orders"
-          wowDelta={data?.ordersWow ?? null}
-          isLoading={isLoading}
+          wowDelta={kpiData?.ordersWow ?? null}
+          isLoading={kpiLoading}
         />
         <KPICard
           title="Total Revenue (GTV)"
-          value={data?.totalGtv ?? 0}
+          value={kpiData?.totalGtv ?? 0}
           unit="currency"
-          wowDelta={data?.gtvWow ?? null}
-          isLoading={isLoading}
+          wowDelta={kpiData?.gtvWow ?? null}
+          isLoading={kpiLoading}
         />
         <KPICard
           title="Avg Order Value"
-          value={data?.avgOrderValue ?? 0}
+          value={kpiData?.avgOrderValue ?? 0}
           unit="currency"
-          wowDelta={data?.avgOrderValueWow ?? null}
-          isLoading={isLoading}
+          wowDelta={kpiData?.avgOrderValueWow ?? null}
+          isLoading={kpiLoading}
+        />
+      </div>
+
+      <div className="mt-8">
+        <WeeklyTrendChart
+          trendData={trendData ?? []}
+          selectedWeek={effectiveWeek}
+          isLoading={trendLoading}
+        />
+      </div>
+
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SportBreakdown
+          sportData={sportData ?? []}
+          metric="tickets"
+          isLoading={sportLoading}
+        />
+        <SportBreakdown
+          sportData={sportData ?? []}
+          metric="gtv"
+          isLoading={sportLoading}
         />
       </div>
     </div>
