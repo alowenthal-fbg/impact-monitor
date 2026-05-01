@@ -7,6 +7,7 @@ import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
 import { SportBreakdown } from '@/components/sport-breakdown';
 import { TopEventsTable } from '@/components/top-events-table';
 import { PipelineStatus } from '@/components/pipeline-status';
+import { DashboardExport } from '@/components/dashboard-export';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
 import { useTrendData } from '@/hooks/use-trend-data';
 import { useDailyData } from '@/hooks/use-daily-data';
@@ -49,11 +50,14 @@ export default function DashboardPage() {
             isLoading={statusLoading}
           />
         </div>
-        <WeekSelector
-          selectedWeek={effectiveWeek}
-          currentWeekStart={currentWeekStart}
-          onChange={setSelectedWeek}
-        />
+        <div className="flex items-center gap-4">
+          <DashboardExport weekStart={effectiveWeek} />
+          <WeekSelector
+            selectedWeek={effectiveWeek}
+            currentWeekStart={currentWeekStart}
+            onChange={setSelectedWeek}
+          />
+        </div>
       </div>
 
       {error && (
@@ -62,61 +66,63 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Total Tickets Sold"
-          value={kpiData?.totalTickets ?? 0}
-          unit="tickets"
-          wowDelta={kpiData?.ticketsWow ?? null}
-          isLoading={kpiLoading}
-        />
-        <KPICard
-          title="Total Orders"
-          value={kpiData?.totalOrders ?? 0}
-          unit="orders"
-          wowDelta={kpiData?.ordersWow ?? null}
-          isLoading={kpiLoading}
-        />
-        <KPICard
-          title="Total Revenue (GTV)"
-          value={kpiData?.totalGtv ?? 0}
-          unit="currency"
-          wowDelta={kpiData?.gtvWow ?? null}
-          isLoading={kpiLoading}
-        />
-        <KPICard
-          title="Avg Order Value"
-          value={kpiData?.avgOrderValue ?? 0}
-          unit="currency"
-          wowDelta={kpiData?.avgOrderValueWow ?? null}
-          isLoading={kpiLoading}
-        />
-      </div>
+      <div id="dashboard-export-target" className="mt-8 rounded-lg bg-white p-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <KPICard
+            title="Total Tickets Sold"
+            value={kpiData?.totalTickets ?? 0}
+            unit="tickets"
+            wowDelta={kpiData?.ticketsWow ?? null}
+            isLoading={kpiLoading}
+          />
+          <KPICard
+            title="Total Orders"
+            value={kpiData?.totalOrders ?? 0}
+            unit="orders"
+            wowDelta={kpiData?.ordersWow ?? null}
+            isLoading={kpiLoading}
+          />
+          <KPICard
+            title="Total Revenue (GTV)"
+            value={kpiData?.totalGtv ?? 0}
+            unit="currency"
+            wowDelta={kpiData?.gtvWow ?? null}
+            isLoading={kpiLoading}
+          />
+          <KPICard
+            title="Avg Order Value"
+            value={kpiData?.avgOrderValue ?? 0}
+            unit="currency"
+            wowDelta={kpiData?.avgOrderValueWow ?? null}
+            isLoading={kpiLoading}
+          />
+        </div>
 
-      <div className="mt-8">
-        <WeeklyTrendChart
-          trendData={trendData ?? []}
-          selectedWeek={effectiveWeek}
-          isLoading={trendLoading}
-        />
-      </div>
+        <div className="mt-8">
+          <WeeklyTrendChart
+            trendData={trendData ?? []}
+            selectedWeek={effectiveWeek}
+            isLoading={trendLoading}
+          />
+        </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SportBreakdown
-          sportData={sportData ?? []}
-          metric="tickets"
-          isLoading={sportLoading}
-        />
-        <SportBreakdown
-          sportData={sportData ?? []}
-          metric="gtv"
-          isLoading={sportLoading}
-        />
-      </div>
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <SportBreakdown
+            sportData={sportData ?? []}
+            metric="tickets"
+            isLoading={sportLoading}
+          />
+          <SportBreakdown
+            sportData={sportData ?? []}
+            metric="gtv"
+            isLoading={sportLoading}
+          />
+        </div>
 
-      <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Top Events This Week</h2>
-        <TopEventsTable events={topEvents ?? []} isLoading={eventsLoading} />
+        <div className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Top Events This Week</h2>
+          <TopEventsTable events={topEvents ?? []} isLoading={eventsLoading} />
+        </div>
       </div>
     </div>
   );
