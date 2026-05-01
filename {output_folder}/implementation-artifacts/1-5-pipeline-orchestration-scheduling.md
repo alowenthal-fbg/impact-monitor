@@ -1,6 +1,6 @@
 # Story 1.5: Pipeline Orchestration & Automated Scheduling
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -19,32 +19,32 @@ so that data is always fresh and I know immediately if something goes wrong.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create pipeline orchestrator (AC: #1, #2, #3)
-  - [ ] Create `src/lib/pipeline/orchestrator.ts`
-  - [ ] Implement `runFullPipeline()` function with stage sequencing
-  - [ ] Log each stage start/completion to `pipeline_runs` table
-  - [ ] Handle partial failures: continue remaining stages, mark run as 'partial'
-  - [ ] Handle complete failures: log as 'failed' with error details
-  - [ ] Return summary object with per-stage results
-- [ ] Task 2: Create cron endpoint (AC: #4)
-  - [ ] Create `src/app/api/cron/daily-refresh/route.ts`
-  - [ ] Verify CRON_SECRET via Authorization header (handled by proxy.ts)
-  - [ ] Call `runFullPipeline()` from orchestrator
-  - [ ] Return 200 with execution summary on success
-  - [ ] Return 500 with error details on failure
-- [ ] Task 3: Create manual refresh endpoint (AC: #5)
-  - [ ] Create `src/app/api/admin/refresh/route.ts`
-  - [ ] Protect with session auth (handled by proxy.ts)
-  - [ ] Call `runFullPipeline()` from orchestrator
-  - [ ] Return execution summary with per-stage status
-- [ ] Task 4: Update Vercel cron configuration (AC: #4)
-  - [ ] Update `vercel.json` cron path to `/api/cron/daily-refresh`
-  - [ ] Set schedule to `"0 12 * * *"` (12 UTC ≈ 7-8am ET)
-  - [ ] Document Hobby tier constraints (±59min precision)
-- [ ] Task 5: Verify performance (AC: #6)
-  - [ ] Test full pipeline execution time
-  - [ ] Ensure completion within 2 minutes
-  - [ ] Log timing metrics per stage
+- [x] Task 1: Create pipeline orchestrator (AC: #1, #2, #3)
+  - [x] Create `src/lib/pipeline/orchestrator.ts`
+  - [x] Implement `runFullPipeline()` function with stage sequencing
+  - [x] Log each stage start/completion to `pipeline_runs` table
+  - [x] Handle partial failures: continue remaining stages, mark run as 'partial'
+  - [x] Handle complete failures: log as 'failed' with error details
+  - [x] Return summary object with per-stage results
+- [x] Task 2: Create cron endpoint (AC: #4)
+  - [x] Create `src/app/api/cron/daily-refresh/route.ts`
+  - [x] Verify CRON_SECRET via Authorization header (handled by proxy.ts)
+  - [x] Call `runFullPipeline()` from orchestrator
+  - [x] Return 200 with execution summary on success
+  - [x] Return 500 with error details on failure
+- [x] Task 3: Create manual refresh endpoint (AC: #5)
+  - [x] Create `src/app/api/admin/refresh/route.ts`
+  - [x] Protect with session auth (handled by proxy.ts)
+  - [x] Call `runFullPipeline()` from orchestrator
+  - [x] Return execution summary with per-stage status
+- [x] Task 4: Update Vercel cron configuration (AC: #4)
+  - [x] Update `vercel.json` cron path to `/api/cron/daily-refresh`
+  - [x] Set schedule to `"0 12 * * *"` (12 UTC ≈ 7-8am ET)
+  - [x] Document Hobby tier constraints (±59min precision)
+- [x] Task 5: Verify performance (AC: #6)
+  - [x] Test full pipeline execution time
+  - [x] Ensure completion within 2 minutes
+  - [x] Log timing metrics per stage
 
 ## Dev Notes
 
@@ -396,9 +396,24 @@ impact-monitor/
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+- vercel.json already configured from Story 1.1 with correct cron schedule
+- Orchestrator uses `runStage` helper for uniform timing/error handling
+- Reconciliation skipped when both sources fail (no data to reconcile)
+- Each stage result includes durationMs for performance monitoring
 
 ### Completion Notes List
+- Pipeline orchestrator (src/lib/pipeline/orchestrator.ts): sequential TM→SF→reconcile with per-stage logging
+- Cron endpoint (src/app/api/cron/daily-refresh/route.ts): CRON_SECRET Bearer token verification
+- Manual refresh endpoint (src/app/api/admin/refresh/route.ts): session cookie auth
+- 7 unit tests covering: all-success, partial failures (TM/SF/reconcile), complete failure, init failure, timing
+- vercel.json already correct from Story 1.1 (0 12 * * * = ~7am ET)
+- All 55 tests pass, lint clean
 
 ### File List
+- src/lib/pipeline/orchestrator.ts (new)
+- src/lib/pipeline/orchestrator.test.ts (new)
+- src/app/api/cron/daily-refresh/route.ts (new)
+- src/app/api/admin/refresh/route.ts (new)
