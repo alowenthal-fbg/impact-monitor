@@ -30,7 +30,7 @@ export default function DashboardPage() {
   // If current week has no data yet, default to the most recent available week
   const effectiveWeek = weeks?.includes(selectedWeek)
     ? selectedWeek
-    : weeks?.[0] ?? selectedWeek;
+    : weeks?.[0] ?? currentWeekStart;
 
   const weekEnd = format(addDays(new Date(effectiveWeek + 'T00:00:00'), 6), 'yyyy-MM-dd');
 

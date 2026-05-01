@@ -22,7 +22,7 @@ export function useTrendData() {
 
       if (error) throw error;
       return (data ?? []).map((row) => ({
-        week_start: row.week_start,
+        week_start: row.week_start.split('T')[0],
         total_tickets: row.total_tickets ?? 0,
         total_gtv: row.total_gtv ?? 0,
       }));

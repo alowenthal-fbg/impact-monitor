@@ -84,7 +84,7 @@ export function useAvailableWeeks() {
         .order('week_start', { ascending: false });
 
       if (error) throw error;
-      return (data as WeeklySummary[]).map((r) => r.week_start);
+      return (data as WeeklySummary[]).map((r) => r.week_start.split('T')[0]);
     },
   });
 }
