@@ -1,6 +1,6 @@
 # Story 3.2: AI Narrative & Talk Track Generation
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -17,43 +17,43 @@ so that I have a ready-to-use verbal update script for the WBR.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Install Anthropic SDK (AC: #1)
-  - [ ] Run `pnpm add @anthropic-ai/sdk`
-  - [ ] Add `ANTHROPIC_API_KEY` to `.env.example` and `.env.local`
-  - [ ] Verify environment variable is not prefixed with `NEXT_PUBLIC_` (server-only)
-- [ ] Task 2: Create AI narrative generation utility (AC: #2, #3)
-  - [ ] Create `src/lib/ai/narrative.ts`
-  - [ ] Export `generateNarrative(weekData, prevWeekData)` function
-  - [ ] Implement Claude API call with prompt template for 2-4 sentence summary
-  - [ ] Return plain text string suitable for email body
-- [ ] Task 3: Create AI talk track generation utility (AC: #1, #3)
-  - [ ] Create `src/lib/ai/talk-track.ts`
-  - [ ] Export `generateTalkTrack(weekData, prevWeekData, sportData, topEvents)` function
-  - [ ] Implement Claude API call with comprehensive prompt template
-  - [ ] Structure prompt to include: headline, KPIs with WoW deltas, key drivers (sport mix, events, trends), context/takeaway, forward-looking areas
-  - [ ] Return full script as plain text string
-- [ ] Task 4: Create API route for talk track generation (AC: #1, #4)
-  - [ ] Create `src/app/api/export/talk-track/route.ts`
-  - [ ] Accept POST request with `weekStart` parameter
-  - [ ] Fetch weekly data, previous week data, sport breakdown, top events from Supabase
-  - [ ] Call `generateTalkTrack()` utility
-  - [ ] Return generated text as response
-  - [ ] Handle errors with `errorResponse()` helper
-- [ ] Task 5: Create talk track download button component (AC: #1, #4)
-  - [ ] Create `src/components/talk-track-download.tsx`
-  - [ ] Implement button with loading state
-  - [ ] On click: POST to `/api/export/talk-track` with selected week
-  - [ ] On success: trigger text file download with filename `talk-track-week-${weekStart}.txt`
-  - [ ] On error: show user-friendly error message
-- [ ] Task 6: Add talk track button to dashboard (AC: #1)
-  - [ ] Import `TalkTrackDownload` component in `src/app/page.tsx`
-  - [ ] Position near export image button
-  - [ ] Pass selected week data as prop
-- [ ] Task 7: Design and test Claude prompts (AC: #1, #2, #3)
-  - [ ] Test narrative prompt generates 2-4 sentence summaries matching WBR tone
-  - [ ] Test talk track prompt produces comprehensive script with all required sections
-  - [ ] Validate key drivers analysis identifies meaningful insights from data
-  - [ ] Ensure historical context improves comparative analysis quality
+- [x] Task 1: Install Anthropic SDK (AC: #1)
+  - [x] Run `pnpm add @anthropic-ai/sdk`
+  - [x] Add `ANTHROPIC_API_KEY` to `.env.example` and `.env.local`
+  - [x] Verify environment variable is not prefixed with `NEXT_PUBLIC_` (server-only)
+- [x] Task 2: Create AI narrative generation utility (AC: #2, #3)
+  - [x] Create `src/lib/ai/narrative.ts`
+  - [x] Export `generateNarrative(weekData, prevWeekData)` function
+  - [x] Implement Claude API call with prompt template for 2-4 sentence summary
+  - [x] Return plain text string suitable for email body
+- [x] Task 3: Create AI talk track generation utility (AC: #1, #3)
+  - [x] Create `src/lib/ai/talk-track.ts`
+  - [x] Export `generateTalkTrack(weekData, prevWeekData, sportData, topEvents)` function
+  - [x] Implement Claude API call with comprehensive prompt template
+  - [x] Structure prompt to include: headline, KPIs with WoW deltas, key drivers (sport mix, events, trends), context/takeaway, forward-looking areas
+  - [x] Return full script as plain text string
+- [x] Task 4: Create API route for talk track generation (AC: #1, #4)
+  - [x] Create `src/app/api/export/talk-track/route.ts`
+  - [x] Accept POST request with `weekStart` parameter
+  - [x] Fetch weekly data, previous week data, sport breakdown, top events from Supabase
+  - [x] Call `generateTalkTrack()` utility
+  - [x] Return generated text as response
+  - [x] Handle errors with `errorResponse()` helper
+- [x] Task 5: Create talk track download button component (AC: #1, #4)
+  - [x] Create `src/components/talk-track-download.tsx`
+  - [x] Implement button with loading state
+  - [x] On click: POST to `/api/export/talk-track` with selected week
+  - [x] On success: trigger text file download with filename `talk-track-week-${weekStart}.txt`
+  - [x] On error: show user-friendly error message
+- [x] Task 6: Add talk track button to dashboard (AC: #1)
+  - [x] Import `TalkTrackDownload` component in `src/app/page.tsx`
+  - [x] Position near export image button
+  - [x] Pass selected week data as prop
+- [x] Task 7: Design and test Claude prompts (AC: #1, #2, #3)
+  - [x] Test narrative prompt generates 2-4 sentence summaries matching WBR tone
+  - [x] Test talk track prompt produces comprehensive script with all required sections
+  - [x] Validate key drivers analysis identifies meaningful insights from data
+  - [x] Ensure historical context improves comparative analysis quality
 
 ## Dev Notes
 
@@ -545,9 +545,30 @@ export function TalkTrackDownload({ weekStart }: TalkTrackDownloadProps) {
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+- All 107 tests passing (17 test files)
+- ESLint clean on all new/modified files
 
 ### Completion Notes List
+- [x] @anthropic-ai/sdk v0.92.0 installed; ANTHROPIC_API_KEY already in .env.example (server-only)
+- [x] narrative.ts: generates 2-4 sentence email summary via Claude Sonnet 4 (max_tokens: 300)
+- [x] talk-track.ts: generates full WBR script with headline, KPIs, drivers, context, forward-looking (max_tokens: 1500)
+- [x] Both utilities include WoW delta calculations and handle null prev week
+- [x] API route fetches week data, sport breakdown, top events from Supabase, calls generateTalkTrack
+- [x] TalkTrackDownload button: loading state, error display, auto-downloads .txt file
+- [x] narrative.ts is exported for reuse by Story 4.1 (email)
+- [x] Prompts include sport mix and top events for key drivers analysis
 
 ### File List
+- src/lib/ai/narrative.ts (new)
+- src/lib/ai/narrative.test.ts (new)
+- src/lib/ai/talk-track.ts (new)
+- src/lib/ai/talk-track.test.ts (new)
+- src/app/api/export/talk-track/route.ts (new)
+- src/components/talk-track-download.tsx (new)
+- src/components/talk-track-download.test.tsx (new)
+- src/app/page.tsx (updated - added TalkTrackDownload button)
+- package.json (updated - added @anthropic-ai/sdk)
+- pnpm-lock.yaml (updated)

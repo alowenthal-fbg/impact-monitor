@@ -8,6 +8,7 @@ import { SportBreakdown } from '@/components/sport-breakdown';
 import { TopEventsTable } from '@/components/top-events-table';
 import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
+import { TalkTrackDownload } from '@/components/talk-track-download';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
 import { useTrendData } from '@/hooks/use-trend-data';
 import { useDailyData } from '@/hooks/use-daily-data';
@@ -51,6 +52,7 @@ export default function DashboardPage() {
           />
         </div>
         <div className="flex items-center gap-4">
+          <TalkTrackDownload weekStart={effectiveWeek} />
           <DashboardExport weekStart={effectiveWeek} />
           <WeekSelector
             selectedWeek={effectiveWeek}
