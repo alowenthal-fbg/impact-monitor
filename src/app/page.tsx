@@ -9,6 +9,7 @@ import { TopEventsTable } from '@/components/top-events-table';
 import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
 import { TalkTrackDownload } from '@/components/talk-track-download';
+import { SubscriberManager } from '@/components/subscriber-manager';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
 import { useTrendData } from '@/hooks/use-trend-data';
 import { useDailyData } from '@/hooks/use-daily-data';
@@ -125,6 +126,11 @@ export default function DashboardPage() {
           <h2 className="mb-4 text-lg font-semibold text-gray-900">Top Events This Week</h2>
           <TopEventsTable events={topEvents ?? []} isLoading={eventsLoading} />
         </div>
+      </div>
+
+      <div className="mt-12">
+        <h2 className="mb-6 text-2xl font-bold text-gray-900">Admin Settings</h2>
+        <SubscriberManager />
       </div>
     </div>
   );
