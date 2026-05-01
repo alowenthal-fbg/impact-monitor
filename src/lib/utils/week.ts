@@ -1,4 +1,4 @@
-import { startOfWeek, endOfWeek, getDay } from 'date-fns';
+import { startOfWeek, endOfWeek, getDay, format, addDays } from 'date-fns';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
 const ET_TIMEZONE = 'America/New_York';
@@ -37,4 +37,13 @@ export function isMonday(date?: Date): boolean {
   const checkDate = date || new Date();
   const etDate = toZonedTime(checkDate, ET_TIMEZONE);
   return getDay(etDate) === 1;
+}
+
+/**
+ * Formats a week_start date string as "Mon D - Mon D" (e.g., "Apr 27 - May 3").
+ */
+export function formatWeekLabel(weekStartStr: string): string {
+  const weekStart = new Date(weekStartStr + 'T00:00:00');
+  const weekEnd = addDays(weekStart, 6);
+  return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d')}`;
 }

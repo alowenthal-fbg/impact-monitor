@@ -26,3 +26,12 @@ export interface Subscriber {
   email: string;
   created_at: string;
 }
+
+export interface WeeklySummary {
+  week_start: string;
+  total_tickets: number | null;
+  total_orders: number | null;
+  total_gtv: number | null;
+  total_face_value: number | null;
+  total_gross_profit: number | null;
+}
