@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { retryWithBackoff } from './retry';
+import { retryWithBackoff, NonRetryableError } from './retry';
 
 describe('retryWithBackoff', () => {
   it('returns result on first success', async () => {
@@ -29,6 +29,12 @@ describe('retryWithBackoff', () => {
   it('wraps non-Error throws in Error', async () => {
     const fn = vi.fn().mockRejectedValue('string error');
     await expect(retryWithBackoff(fn, 0, 1)).rejects.toThrow('string error');
+  });
+
+  it('throws NonRetryableError immediately without retrying', async () => {
+    const fn = vi.fn().mockRejectedValue(new NonRetryableError('permanent'));
+    await expect(retryWithBackoff(fn, 3, 1)).rejects.toThrow('permanent');
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 
   it('applies exponential backoff delays', async () => {

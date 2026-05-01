@@ -1,3 +1,10 @@
+export class NonRetryableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NonRetryableError';
+  }
+}
+
 export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   maxRetries = 3,
@@ -8,6 +15,7 @@ export async function retryWithBackoff<T>(
     try {
       return await fn();
     } catch (err) {
+      if (err instanceof NonRetryableError) throw err;
       lastError = err instanceof Error ? err : new Error(String(err));
       if (attempt === maxRetries) break;
       await new Promise((r) => setTimeout(r, baseDelayMs * Math.pow(2, attempt)));
