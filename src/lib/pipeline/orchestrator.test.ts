@@ -14,6 +14,14 @@ vi.mock('@/lib/pipeline/reconcile', () => ({
   reconcileDailyMetrics: vi.fn(),
 }));
 
+vi.mock('@/lib/email/send', () => ({
+  sendMondayEmail: vi.fn(),
+}));
+
+vi.mock('@/lib/utils/week', () => ({
+  isMonday: vi.fn(() => false),
+}));
+
 const mockInsert = vi.fn();
 const mockUpdate = vi.fn();
 const mockSelect = vi.fn();
