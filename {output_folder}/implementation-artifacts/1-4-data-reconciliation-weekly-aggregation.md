@@ -1,6 +1,6 @@
 # Story 1.4: Data Reconciliation & Weekly Aggregation
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -30,49 +30,49 @@ So that I have a single trustworthy dataset for reporting.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Install date handling dependencies (AC: #2)
-  - [ ] Run `pnpm add date-fns date-fns-tz`
-  - [ ] Run `pnpm add -D vitest @vitest/ui` (if not already present)
-  - [ ] Verify installation in `package.json`
+- [x] Task 1: Install date handling dependencies (AC: #2)
+  - [x] Run `pnpm add date-fns date-fns-tz`
+  - [x] Run `pnpm add -D vitest @vitest/ui` (if not already present)
+  - [x] Verify installation in `package.json`
 
-- [ ] Task 2: Create shared week boundary utility (AC: #2)
-  - [ ] Create `src/lib/utils/week.ts`
-  - [ ] Implement `getWeekStart(date: Date): Date` — returns Monday 00:00:00 ET
-  - [ ] Implement `getWeekEnd(date: Date): Date` — returns Sunday 23:59:59 ET
-  - [ ] Implement `getCurrentWeek(): Date` — returns this week's Monday
-  - [ ] Implement `isMonday(date?: Date): boolean` — checks if date (or today) is Monday
-  - [ ] All functions use `date-fns` with `America/New_York` timezone via `date-fns-tz`
+- [x] Task 2: Create shared week boundary utility (AC: #2)
+  - [x] Create `src/lib/utils/week.ts`
+  - [x] Implement `getWeekStart(date: Date): Date` — returns Monday 00:00:00 ET
+  - [x] Implement `getWeekEnd(date: Date): Date` — returns Sunday 23:59:59 ET
+  - [x] Implement `getCurrentWeek(): Date` — returns this week's Monday
+  - [x] Implement `isMonday(date?: Date): boolean` — checks if date (or today) is Monday
+  - [x] All functions use `date-fns` with `America/New_York` timezone via `date-fns-tz`
 
-- [ ] Task 3: Test week boundary utility (AC: #2)
-  - [ ] Create `src/lib/utils/week.test.ts` (co-located test)
-  - [ ] Test `getWeekStart()` returns Monday for various input dates
-  - [ ] Test `getWeekEnd()` returns Sunday 23:59:59 for various input dates
-  - [ ] Test `getCurrentWeek()` returns current week's Monday
-  - [ ] Test `isMonday()` returns true on Mondays, false otherwise
-  - [ ] Test timezone handling (ET vs UTC edge cases)
-  - [ ] Run tests: `pnpm vitest run src/lib/utils/week.test.ts`
+- [x] Task 3: Test week boundary utility (AC: #2)
+  - [x] Create `src/lib/utils/week.test.ts` (co-located test)
+  - [x] Test `getWeekStart()` returns Monday for various input dates
+  - [x] Test `getWeekEnd()` returns Sunday 23:59:59 for various input dates
+  - [x] Test `getCurrentWeek()` returns current week's Monday
+  - [x] Test `isMonday()` returns true on Mondays, false otherwise
+  - [x] Test timezone handling (ET vs UTC edge cases)
+  - [x] Run tests: `pnpm vitest run src/lib/utils/week.test.ts`
 
-- [ ] Task 4: Create reconciliation module (AC: #1)
-  - [ ] Create `src/lib/pipeline/reconcile.ts`
-  - [ ] Implement `reconcileDailyMetrics(startDate: string, endDate: string): Promise<void>`
-  - [ ] Query `daily_metrics` for TM data (`source='tm_api'`) in date range
-  - [ ] Query `daily_metrics` for Snowflake data (`source='snowflake'`) in date range
-  - [ ] Merge by `metric_date`: TM provides orders, gtv, sport, event_name; Snowflake provides face_value, gross_profit, tickets_sold
-  - [ ] Write reconciled rows to `daily_metrics` with `source='reconciled'`
-  - [ ] Use Supabase service role client for writes
-  - [ ] Handle cases where only one source has data for a date (write partial reconciled row with nulls for missing fields)
+- [x] Task 4: Create reconciliation module (AC: #1)
+  - [x] Create `src/lib/pipeline/reconcile.ts`
+  - [x] Implement `reconcileDailyMetrics(startDate: string, endDate: string): Promise<void>`
+  - [x] Query `daily_metrics` for TM data (`source='tm_api'`) in date range
+  - [x] Query `daily_metrics` for Snowflake data (`source='snowflake'`) in date range
+  - [x] Merge by `metric_date`: TM provides orders, gtv, sport, event_name; Snowflake provides face_value, gross_profit, tickets_sold
+  - [x] Write reconciled rows to `daily_metrics` with `source='reconciled'`
+  - [x] Use Supabase service role client for writes
+  - [x] Handle cases where only one source has data for a date (write partial reconciled row with nulls for missing fields)
 
-- [ ] Task 5: Verify weekly_summary view (AC: #3)
-  - [ ] Confirm `weekly_summary` SQL view exists in `supabase/schema.sql` (created in Story 1.1)
-  - [ ] Verify view uses Monday-Sunday boundaries via `date_trunc('week', metric_date + INTERVAL '1 day') - INTERVAL '1 day'`
-  - [ ] Verify view filters `WHERE source = 'reconciled'`
-  - [ ] Test query: `SELECT * FROM weekly_summary ORDER BY week_start DESC LIMIT 5`
-  - [ ] Verify aggregates: `total_tickets`, `total_orders`, `total_gtv`, `total_face_value`, `total_gross_profit`
+- [x] Task 5: Verify weekly_summary view (AC: #3)
+  - [x] Confirm `weekly_summary` SQL view exists in `supabase/schema.sql` (created in Story 1.1)
+  - [x] Verify view uses Monday-Sunday boundaries via `date_trunc('week', metric_date + INTERVAL '1 day') - INTERVAL '1 day'`
+  - [x] Verify view filters `WHERE source = 'reconciled'`
+  - [x] Test query: `SELECT * FROM weekly_summary ORDER BY week_start DESC LIMIT 5`
+  - [x] Verify aggregates: `total_tickets`, `total_orders`, `total_gtv`, `total_face_value`, `total_gross_profit`
 
-- [ ] Task 6: Add reconciliation to pipeline orchestrator (integration point for Story 1.5)
-  - [ ] Document: reconciliation will be called from `src/app/api/cron/daily-refresh/route.ts` after TM and Snowflake ingestion complete
-  - [ ] Document: reconciliation date range should be last 7-14 days to handle late-arriving data
-  - [ ] Document: reconciliation errors should be logged to `pipeline_runs` table with stage='reconciliation'
+- [x] Task 6: Add reconciliation to pipeline orchestrator (integration point for Story 1.5)
+  - [x] Document: reconciliation will be called from `src/app/api/cron/daily-refresh/route.ts` after TM and Snowflake ingestion complete
+  - [x] Document: reconciliation date range should be last 7-14 days to handle late-arriving data
+  - [x] Document: reconciliation errors should be logged to `pipeline_runs` table with stage='reconciliation'
 
 ## Dev Notes
 
@@ -395,9 +395,25 @@ export async function GET(request: Request) {
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+- date-fns-tz v3 uses `toZonedTime`/`fromZonedTime` (not deprecated `utcToZonedTime`/`zonedTimeToUtc` or `TZDate` constructor)
+- Tests verify ET timezone edge cases including UTC times that map to different ET days
 
 ### Completion Notes List
+- Installed date-fns 4.1.0 and date-fns-tz 3.2.0 (vitest already present at ^4.1.5)
+- Week boundary utility (src/lib/utils/week.ts) with 4 exported functions using date-fns-tz v3 API
+- 15 unit tests for week utility covering all edge cases including UTC/ET day boundary shifts
+- Reconciliation module (src/lib/pipeline/reconcile.ts) merges TM + Snowflake by metric_date, handles partial data
+- 8 unit tests for reconciliation covering: both sources, TM-only, SF-only, no data, errors, multi-event
+- weekly_summary SQL view verified in schema.sql with correct Mon-Sun boundaries and reconciled filter
+- All 48 tests pass, lint clean
 
 ### File List
+- src/lib/utils/week.ts (new)
+- src/lib/utils/week.test.ts (new)
+- src/lib/pipeline/reconcile.ts (new)
+- src/lib/pipeline/reconcile.test.ts (new)
+- package.json (modified — added date-fns, date-fns-tz)
+- pnpm-lock.yaml (modified)
