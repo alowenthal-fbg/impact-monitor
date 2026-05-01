@@ -1,6 +1,6 @@
 # Story 1.2: Ticketmaster Impact Partner API Client
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -17,22 +17,22 @@ so that order, GTV, event, and sport category data flows into the system automat
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create retry utility (AC: #2)
-  - [ ] Implement `src/lib/utils/retry.ts` with generic `retryWithBackoff` wrapper
-  - [ ] Co-located test `src/lib/utils/retry.test.ts`
-- [ ] Task 2: Implement Ticketmaster API client (AC: #1, #3, #4)
-  - [ ] Create `src/lib/pipeline/ticketmaster.ts`
-  - [ ] Implement OAuth2 client credentials authentication
-  - [ ] Implement token refresh on 401
-  - [ ] Fetch order/sales data for date range (handle pagination)
-  - [ ] Transform API response to daily_metrics schema
-  - [ ] Upsert to Supabase via service role client (ON CONFLICT dedupe)
-- [ ] Task 3: Add tests (AC: all)
-  - [ ] Create `src/lib/pipeline/ticketmaster.test.ts`
-  - [ ] Test successful fetch + upsert
-  - [ ] Test token refresh on 401
-  - [ ] Test retry on 429 rate limit
-  - [ ] Test error after max retries
+- [x] Task 1: Create retry utility (AC: #2)
+  - [x] Implement `src/lib/utils/retry.ts` with generic `retryWithBackoff` wrapper
+  - [x] Co-located test `src/lib/utils/retry.test.ts`
+- [x] Task 2: Implement Ticketmaster API client (AC: #1, #3, #4)
+  - [x] Create `src/lib/pipeline/ticketmaster.ts`
+  - [x] Implement OAuth2 client credentials authentication
+  - [x] Implement token refresh on 401
+  - [x] Fetch order/sales data for date range (handle pagination)
+  - [x] Transform API response to daily_metrics schema
+  - [x] Upsert to Supabase via service role client (ON CONFLICT dedupe)
+- [x] Task 3: Add tests (AC: all)
+  - [x] Create `src/lib/pipeline/ticketmaster.test.ts`
+  - [x] Test successful fetch + upsert
+  - [x] Test token refresh on 401
+  - [x] Test retry on 429 rate limit
+  - [x] Test error after max retries
 
 ## Dev Notes
 
@@ -124,9 +124,28 @@ Files from Story 1.1 used:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+- All 12 tests pass (5 retry + 7 ticketmaster)
+- Lint clean, build succeeds
 
 ### Completion Notes List
+- Created generic `retryWithBackoff` utility (reusable by Snowflake/Resend clients)
+- TM client implements OAuth2 client credentials flow with module-scoped token caching
+- Token auto-refreshes on 401 or 5min before expiry
+- Orders are grouped by (date, event_name) and aggregated (tickets_sold, orders, gtv, face_value)
+- Upsert uses ON CONFLICT on (metric_date, event_name, source) to prevent duplicates
+- 429 and 5xx errors throw to trigger retryWithBackoff; 4xx (non-401/429) are permanent errors
+- Installed vitest as test framework, added test/test:watch scripts to package.json
+
+### Change Log
+- 2026-05-01: Implemented retry utility and Ticketmaster API client with full test coverage
 
 ### File List
+- package.json (modified — added vitest, test scripts)
+- pnpm-lock.yaml (modified)
+- src/lib/utils/retry.ts (new)
+- src/lib/utils/retry.test.ts (new)
+- src/lib/pipeline/ticketmaster.ts (new)
+- src/lib/pipeline/ticketmaster.test.ts (new)
