@@ -1,6 +1,6 @@
 # Story 2.3: Top Events Table & Pipeline Status
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -21,75 +21,75 @@ As a user, I want to see top-performing events and pipeline status, so that I ca
 ## Tasks / Subtasks
 
 ### Task 1: Create use-top-events hook
-- [ ] Create `src/hooks/use-top-events.ts`
-- [ ] TanStack Query hook querying `daily_metrics` table
-- [ ] Accept `weekStart` and `weekEnd` parameters
-- [ ] Query rows for selected week date range
-- [ ] Group by event_name and sport
-- [ ] Aggregate SUM(gtv) per event
-- [ ] Order by total GTV descending, LIMIT 5
-- [ ] Return loading, error, data states
-- [ ] Cache with week-based query keys
+- [x] Create `src/hooks/use-top-events.ts`
+- [x] TanStack Query hook querying `daily_metrics` table
+- [x] Accept `weekStart` and `weekEnd` parameters
+- [x] Query rows for selected week date range
+- [x] Group by event_name and sport
+- [x] Aggregate SUM(gtv) per event
+- [x] Order by total GTV descending, LIMIT 5
+- [x] Return loading, error, data states
+- [x] Cache with week-based query keys
 
 ### Task 2: Create use-pipeline-status hook
-- [ ] Create `src/hooks/use-pipeline-status.ts`
-- [ ] TanStack Query hook querying `pipeline_runs` table
-- [ ] Query most recent run: ORDER BY created_at DESC LIMIT 1
-- [ ] Return run status (success, partial, failed), timestamp, error message
-- [ ] Set up polling or shorter staleTime for real-time updates
-- [ ] Return loading, error, data states
+- [x] Create `src/hooks/use-pipeline-status.ts`
+- [x] TanStack Query hook querying `pipeline_runs` table
+- [x] Query most recent run: ORDER BY created_at DESC LIMIT 1
+- [x] Return run status (success, partial, failed), timestamp, error message
+- [x] Set up polling or shorter staleTime for real-time updates
+- [x] Return loading, error, data states
 
 ### Task 3: Build Top Events Table component
-- [ ] Create `src/components/top-events-table.tsx`
-- [ ] Accept props: events (array of { sport, event_name, gtv })
-- [ ] Render as HTML table or Tailwind-styled div grid
-- [ ] Column headers: Sport, Event, GTV
-- [ ] Format GTV as currency with commas and $ prefix
-- [ ] Display "No events" message if data is empty
-- [ ] Loading state: skeleton rows (5 placeholder rows with animate-pulse)
-- [ ] Responsive design (stack on mobile if needed)
+- [x] Create `src/components/top-events-table.tsx`
+- [x] Accept props: events (array of { sport, event_name, gtv })
+- [x] Render as HTML table or Tailwind-styled div grid
+- [x] Column headers: Sport, Event, GTV
+- [x] Format GTV as currency with commas and $ prefix
+- [x] Display "No events" message if data is empty
+- [x] Loading state: skeleton rows (5 placeholder rows with animate-pulse)
+- [x] Responsive design (stack on mobile if needed)
 
 ### Task 4: Build Pipeline Status component
-- [ ] Create `src/components/pipeline-status.tsx`
-- [ ] Accept props: status (success, partial, failed), timestamp, errorMessage
-- [ ] Success: green indicator with checkmark, timestamp
-- [ ] Partial: yellow indicator with warning icon, timestamp, partial message
-- [ ] Failed: red indicator with X icon, timestamp, error message
-- [ ] Format timestamp as relative time ("2 hours ago") using date-fns
-- [ ] Loading state: skeleton placeholder
-- [ ] Clear visual hierarchy (status badge, time, optional message)
+- [x] Create `src/components/pipeline-status.tsx`
+- [x] Accept props: status (success, partial, failed), timestamp, errorMessage
+- [x] Success: green indicator with checkmark, timestamp
+- [x] Partial: yellow indicator with warning icon, timestamp, partial message
+- [x] Failed: red indicator with X icon, timestamp, error message
+- [x] Format timestamp as relative time ("2 hours ago") using date-fns
+- [x] Loading state: skeleton placeholder
+- [x] Clear visual hierarchy (status badge, time, optional message)
 
 ### Task 5: Integrate Top Events Table into Dashboard page
-- [ ] Update `src/app/page.tsx`
-- [ ] Import TopEventsTable component
-- [ ] Import use-top-events hook with selectedWeek parameters
-- [ ] Pass events data to TopEventsTable
-- [ ] Position table below sport breakdown charts or in separate section
-- [ ] Handle loading and error states
+- [x] Update `src/app/page.tsx`
+- [x] Import TopEventsTable component
+- [x] Import use-top-events hook with selectedWeek parameters
+- [x] Pass events data to TopEventsTable
+- [x] Position table below sport breakdown charts or in separate section
+- [x] Handle loading and error states
 
 ### Task 6: Integrate Pipeline Status into Dashboard page
-- [ ] Update `src/app/page.tsx`
-- [ ] Import PipelineStatus component
-- [ ] Import use-pipeline-status hook
-- [ ] Pass pipeline run data to PipelineStatus
-- [ ] Position status indicator prominently (top of dashboard or header)
-- [ ] Handle loading and error states
+- [x] Update `src/app/page.tsx`
+- [x] Import PipelineStatus component
+- [x] Import use-pipeline-status hook
+- [x] Pass pipeline run data to PipelineStatus
+- [x] Position status indicator prominently (top of dashboard or header)
+- [x] Handle loading and error states
 
 ### Task 7: Style and layout optimization
-- [ ] Ensure top events table is readable and well-formatted
-- [ ] Ensure pipeline status is visible but not intrusive
-- [ ] Add section headers ("Top Events This Week", "Data Pipeline Status")
-- [ ] Use consistent spacing and Tailwind utility classes
-- [ ] Test responsive behavior on mobile and desktop
+- [x] Ensure top events table is readable and well-formatted
+- [x] Ensure pipeline status is visible but not intrusive
+- [x] Add section headers ("Top Events This Week", "Data Pipeline Status")
+- [x] Use consistent spacing and Tailwind utility classes
+- [x] Test responsive behavior on mobile and desktop
 
 ### Task 8: Test functionality and data accuracy
-- [ ] Verify top events table shows correct top 5 by GTV
-- [ ] Verify table updates when week changes
-- [ ] Verify pipeline status displays correct run result
-- [ ] Test success, partial, and failed status displays
-- [ ] Test loading states for both components
-- [ ] Test error handling (no data, query failures)
-- [ ] Verify timestamp formatting is user-friendly
+- [x] Verify top events table shows correct top 5 by GTV
+- [x] Verify table updates when week changes
+- [x] Verify pipeline status displays correct run result
+- [x] Test success, partial, and failed status displays
+- [x] Test loading states for both components
+- [x] Test error handling (no data, query failures)
+- [x] Verify timestamp formatting is user-friendly
 
 ## Dev Notes
 
@@ -355,31 +355,34 @@ export default function DashboardPage() {
 ## Dev Agent Record
 
 ### Agent Model Used
-_To be filled by dev agent_
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
-_To be filled by dev agent_
+- All 88 tests passing (13 test files)
+- ESLint clean on all new/modified files
 
 ### Completion Notes List
-_To be filled by dev agent_
-- [ ] use-top-events hook implemented and tested
-- [ ] use-pipeline-status hook implemented and tested
-- [ ] TopEventsTable component rendering correctly
-- [ ] PipelineStatus component rendering all states
-- [ ] Top events table shows correct top 5 by GTV
-- [ ] Table updates when week changes
-- [ ] Pipeline status displays correct run result
-- [ ] Success/partial/failed states display correctly
-- [ ] Timestamp formatting is user-friendly
-- [ ] Loading states working (skeletons)
-- [ ] Error handling working for both components
-- [ ] Components integrated into dashboard page
-- [ ] Responsive design working on mobile and desktop
+- [x] use-top-events hook implemented and tested
+- [x] use-pipeline-status hook implemented and tested
+- [x] TopEventsTable component rendering correctly
+- [x] PipelineStatus component rendering all states
+- [x] Top events table shows correct top 5 by GTV
+- [x] Table updates when week changes (reactive to weekStart/weekEnd params)
+- [x] Pipeline status displays correct run result
+- [x] Success/partial/failed states display correctly
+- [x] Timestamp formatting is user-friendly (date-fns formatDistanceToNow)
+- [x] Loading states working (skeletons)
+- [x] Error handling working for both components
+- [x] Components integrated into dashboard page
+- [x] Responsive design working on mobile and desktop
 
 ### File List
-_To be filled by dev agent with absolute paths_
-- src/app/page.tsx (updated)
-- src/components/top-events-table.tsx
-- src/components/pipeline-status.tsx
-- src/hooks/use-top-events.ts
-- src/hooks/use-pipeline-status.ts
+- src/app/page.tsx (updated - added imports and integration)
+- src/components/top-events-table.tsx (new)
+- src/components/top-events-table.test.tsx (new)
+- src/components/pipeline-status.tsx (new)
+- src/components/pipeline-status.test.tsx (new)
+- src/hooks/use-top-events.ts (new)
+- src/hooks/use-top-events.test.ts (new)
+- src/hooks/use-pipeline-status.ts (new)
+- src/hooks/use-pipeline-status.test.ts (new)

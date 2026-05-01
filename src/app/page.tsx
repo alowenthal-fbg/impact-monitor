@@ -5,9 +5,13 @@ import { KPICard } from '@/components/kpi-card';
 import { WeekSelector } from '@/components/week-selector';
 import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
 import { SportBreakdown } from '@/components/sport-breakdown';
+import { TopEventsTable } from '@/components/top-events-table';
+import { PipelineStatus } from '@/components/pipeline-status';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
 import { useTrendData } from '@/hooks/use-trend-data';
 import { useDailyData } from '@/hooks/use-daily-data';
+import { useTopEvents } from '@/hooks/use-top-events';
+import { usePipelineStatus } from '@/hooks/use-pipeline-status';
 import { getCurrentWeek } from '@/lib/utils/week';
 import { format, addDays } from 'date-fns';
 
@@ -30,11 +34,21 @@ export default function DashboardPage() {
   const { data: kpiData, isLoading: kpiLoading, error } = useWeeklyData(effectiveWeek, currentWeekStart);
   const { data: trendData, isLoading: trendLoading } = useTrendData();
   const { data: sportData, isLoading: sportLoading } = useDailyData(effectiveWeek, weekEnd);
+  const { data: topEvents, isLoading: eventsLoading } = useTopEvents(effectiveWeek, weekEnd);
+  const { data: pipelineStatus, isLoading: statusLoading } = usePipelineStatus();
 
   return (
     <div className="flex min-h-screen flex-col p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Impact Monitor</h1>
+        <div className="flex items-center gap-6">
+          <h1 className="text-3xl font-bold text-gray-900">Impact Monitor</h1>
+          <PipelineStatus
+            status={pipelineStatus?.status}
+            timestamp={pipelineStatus?.created_at}
+            errorMessage={pipelineStatus?.error_message}
+            isLoading={statusLoading}
+          />
+        </div>
         <WeekSelector
           selectedWeek={effectiveWeek}
           currentWeekStart={currentWeekStart}
@@ -98,6 +112,11 @@ export default function DashboardPage() {
           metric="gtv"
           isLoading={sportLoading}
         />
+      </div>
+
+      <div className="mt-8">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Top Events This Week</h2>
+        <TopEventsTable events={topEvents ?? []} isLoading={eventsLoading} />
       </div>
     </div>
   );
