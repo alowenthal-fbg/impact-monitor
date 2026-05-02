@@ -3,7 +3,16 @@ import type { DailyMetric } from '@/lib/supabase/types';
 
 /**
  * Reconciles Ticketmaster and Snowflake data for the given date range.
- * Creates reconciled rows in daily_metrics combining both sources.
+ *
+ * TM (Impact) provides event-level detail: orders, gtv, tickets_sold, face_value, sport, event_name.
+ * Snowflake provides date-level aggregates: face_value, gross_profit, tickets_sold (no event breakdown).
+ *
+ * Strategy:
+ * - For each TM event row, carry forward all TM fields as-is.
+ * - Allocate Snowflake's date-level gross_profit proportionally across events
+ *   based on each event's share of the day's total TM face_value.
+ * - If only Snowflake data exists for a date (no TM events), create a single
+ *   reconciled row with Snowflake aggregates.
  */
 export async function reconcileDailyMetrics(
   startDate: string,
@@ -31,57 +40,65 @@ export async function reconcileDailyMetrics(
 
   if (sfError) throw new Error(`Failed to fetch Snowflake data: ${sfError.message}`);
 
-  // Group TM data by metric_date + event_name for matching
-  const tmByKey = new Map<string, DailyMetric>();
+  // Group TM rows by date
+  const tmByDate = new Map<string, DailyMetric[]>();
   tmData?.forEach((row) => {
-    const key = `${row.metric_date}|${row.event_name ?? ''}`;
-    tmByKey.set(key, row);
+    const existing = tmByDate.get(row.metric_date) ?? [];
+    existing.push(row);
+    tmByDate.set(row.metric_date, existing);
   });
 
-  // Group Snowflake data by metric_date (Snowflake rows have no event_name)
+  // Group Snowflake data by date
   const sfByDate = new Map<string, DailyMetric>();
   sfData?.forEach((row) => sfByDate.set(row.metric_date, row));
 
-  // Get all unique dates from both sources
+  // Get all unique dates
   const allDates = new Set<string>();
   tmData?.forEach((row) => allDates.add(row.metric_date));
   sfData?.forEach((row) => allDates.add(row.metric_date));
 
-  // Create reconciled rows
   const reconciledRows: Partial<DailyMetric>[] = [];
 
   for (const date of allDates) {
     const sfRow = sfByDate.get(date);
+    const tmRows = tmByDate.get(date) ?? [];
 
-    // Find all TM rows for this date
-    const tmRowsForDate = (tmData ?? []).filter((r) => r.metric_date === date);
+    if (tmRows.length > 0) {
+      // Calculate day's total face value for proportional allocation
+      const dayTotalFace = tmRows.reduce((sum, r) => sum + (r.face_value ?? 0), 0);
+      const sfGrossProfit = sfRow?.gross_profit ?? null;
 
-    if (tmRowsForDate.length > 0) {
-      // Create a reconciled row per TM event, enriching with Snowflake data
-      for (const tmRow of tmRowsForDate) {
+      for (const tmRow of tmRows) {
+        // Allocate Snowflake gross_profit proportionally by face_value share
+        let allocatedGrossProfit: number | null = null;
+        if (sfGrossProfit != null && dayTotalFace > 0) {
+          const share = (tmRow.face_value ?? 0) / dayTotalFace;
+          allocatedGrossProfit = Math.round(sfGrossProfit * share * 100) / 100;
+        }
+
         reconciledRows.push({
           metric_date: date,
+          event_name: tmRow.event_name ?? null,
+          sport: tmRow.sport ?? null,
           orders: tmRow.orders ?? null,
           gtv: tmRow.gtv ?? null,
-          sport: tmRow.sport ?? null,
-          event_name: tmRow.event_name ?? null,
-          face_value: sfRow?.face_value ?? null,
-          gross_profit: sfRow?.gross_profit ?? null,
-          tickets_sold: sfRow?.tickets_sold ?? null,
+          tickets_sold: tmRow.tickets_sold ?? null,
+          face_value: tmRow.face_value ?? null,
+          gross_profit: allocatedGrossProfit,
           source: 'reconciled',
         });
       }
     } else if (sfRow) {
-      // Only Snowflake data exists for this date
+      // Only Snowflake data — single aggregate row for the date
       reconciledRows.push({
         metric_date: date,
+        event_name: null,
+        sport: null,
         orders: null,
         gtv: null,
-        sport: null,
-        event_name: null,
+        tickets_sold: sfRow.tickets_sold ?? null,
         face_value: sfRow.face_value ?? null,
         gross_profit: sfRow.gross_profit ?? null,
-        tickets_sold: sfRow.tickets_sold ?? null,
         source: 'reconciled',
       });
     }

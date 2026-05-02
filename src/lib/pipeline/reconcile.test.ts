@@ -26,9 +26,9 @@ describe('reconcileDailyMetrics', () => {
     vi.clearAllMocks();
   });
 
-  it('merges TM and Snowflake data by date', async () => {
+  it('merges TM and Snowflake data, keeping TM fields and allocating gross_profit', async () => {
     const tmChain = setupChain([
-      { metric_date: '2026-04-28', orders: 5, gtv: 500, sport: 'NBA', event_name: 'Lakers vs Celtics', source: 'tm_api' },
+      { metric_date: '2026-04-28', orders: 5, gtv: 500, sport: 'NBA', event_name: 'Lakers vs Celtics', face_value: 400, tickets_sold: 10, source: 'tm_api' },
     ]);
     const sfChain = setupChain([
       { metric_date: '2026-04-28', face_value: 400, gross_profit: 100, tickets_sold: 10, source: 'snowflake' },
@@ -53,17 +53,17 @@ describe('reconcileDailyMetrics', () => {
         sport: 'NBA',
         event_name: 'Lakers vs Celtics',
         face_value: 400,
-        gross_profit: 100,
         tickets_sold: 10,
+        gross_profit: 100,
         source: 'reconciled',
       })],
       { onConflict: 'metric_date,event_name,source' }
     );
   });
 
-  it('handles TM-only data (Snowflake missing)', async () => {
+  it('handles TM-only data (Snowflake missing) — gross_profit null', async () => {
     const tmChain = setupChain([
-      { metric_date: '2026-04-29', orders: 3, gtv: 300, sport: 'MLB', event_name: 'Yankees vs Mets', source: 'tm_api' },
+      { metric_date: '2026-04-29', orders: 3, gtv: 300, sport: 'MLB', event_name: 'Yankees vs Mets', face_value: 250, tickets_sold: 6, source: 'tm_api' },
     ]);
     const sfChain = setupChain([]);
 
@@ -82,9 +82,10 @@ describe('reconcileDailyMetrics', () => {
       [expect.objectContaining({
         metric_date: '2026-04-29',
         orders: 3,
-        face_value: null,
+        gtv: 300,
+        tickets_sold: 6,
+        face_value: 250,
         gross_profit: null,
-        tickets_sold: null,
         source: 'reconciled',
       })],
       { onConflict: 'metric_date,event_name,source' }
@@ -174,7 +175,7 @@ describe('reconcileDailyMetrics', () => {
 
   it('throws on upsert error', async () => {
     const tmChain = setupChain([
-      { metric_date: '2026-04-28', orders: 5, gtv: 500, sport: 'NBA', event_name: 'Game 1', source: 'tm_api' },
+      { metric_date: '2026-04-28', orders: 5, gtv: 500, sport: 'NBA', event_name: 'Game 1', face_value: 400, tickets_sold: 10, source: 'tm_api' },
     ]);
     const sfChain = setupChain([]);
 
@@ -190,13 +191,13 @@ describe('reconcileDailyMetrics', () => {
       .rejects.toThrow('Failed to upsert reconciled data: constraint violation');
   });
 
-  it('handles multiple TM events on same date', async () => {
+  it('allocates gross_profit proportionally across multiple events', async () => {
     const tmChain = setupChain([
-      { metric_date: '2026-04-28', orders: 5, gtv: 500, sport: 'NBA', event_name: 'Lakers vs Celtics', source: 'tm_api' },
-      { metric_date: '2026-04-28', orders: 3, gtv: 300, sport: 'NHL', event_name: 'Rangers vs Bruins', source: 'tm_api' },
+      { metric_date: '2026-04-28', orders: 5, gtv: 500, sport: 'NBA', event_name: 'Lakers vs Celtics', face_value: 400, tickets_sold: 8, source: 'tm_api' },
+      { metric_date: '2026-04-28', orders: 3, gtv: 300, sport: 'NHL', event_name: 'Rangers vs Bruins', face_value: 200, tickets_sold: 4, source: 'tm_api' },
     ]);
     const sfChain = setupChain([
-      { metric_date: '2026-04-28', face_value: 600, gross_profit: 150, tickets_sold: 15, source: 'snowflake' },
+      { metric_date: '2026-04-28', face_value: 600, gross_profit: 150, tickets_sold: 12, source: 'snowflake' },
     ]);
 
     let callCount = 0;
@@ -210,12 +211,29 @@ describe('reconcileDailyMetrics', () => {
     const result = await reconcileDailyMetrics('2026-04-28', '2026-04-28');
 
     expect(result.reconciledCount).toBe(2);
-    expect(mockUpsert).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ event_name: 'Lakers vs Celtics', source: 'reconciled' }),
-        expect.objectContaining({ event_name: 'Rangers vs Bruins', source: 'reconciled' }),
-      ]),
-      { onConflict: 'metric_date,event_name,source' }
-    );
+
+    const rows = mockUpsert.mock.calls[0][0];
+    const lakers = rows.find((r: Record<string, unknown>) => r.event_name === 'Lakers vs Celtics');
+    const rangers = rows.find((r: Record<string, unknown>) => r.event_name === 'Rangers vs Bruins');
+
+    // Lakers: 400/600 = 2/3 of 150 = 100
+    expect(lakers).toMatchObject({
+      orders: 5,
+      gtv: 500,
+      tickets_sold: 8,
+      face_value: 400,
+      gross_profit: 100,
+      source: 'reconciled',
+    });
+
+    // Rangers: 200/600 = 1/3 of 150 = 50
+    expect(rangers).toMatchObject({
+      orders: 3,
+      gtv: 300,
+      tickets_sold: 4,
+      face_value: 200,
+      gross_profit: 50,
+      source: 'reconciled',
+    });
   });
 });
