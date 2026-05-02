@@ -165,14 +165,33 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
             />
           )}
           <Tooltip
-            formatter={(value, name) => {
-              const v = Number(value);
-              if (name === 'GTV') return [`$${v.toLocaleString()}`, name];
-              return [v.toLocaleString(), name];
+            content={({ active, payload, label }) => {
+              if (!active || !payload?.length) return null;
+              const sorted = [...payload].sort(
+                (a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)
+              );
+              return (
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+                  <p className="mb-2 text-xs font-medium text-gray-600">
+                    {isWeekly ? formatWeekLabel(String(label)) : formatMonthLabel(String(label))}
+                  </p>
+                  {sorted.map((entry) => {
+                    const v = Number(entry.value);
+                    const formatted = entry.name === 'GTV' ? `$${v.toLocaleString()}` : v.toLocaleString();
+                    return (
+                      <div key={entry.name} className="flex items-center gap-2 text-sm">
+                        <span
+                          className="inline-block h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: entry.color }}
+                        />
+                        <span className="text-gray-700">{entry.name}</span>
+                        <span className="ml-auto font-medium">{formatted}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
             }}
-            labelFormatter={(label) =>
-              isWeekly ? formatWeekLabel(String(label)) : formatMonthLabel(String(label))
-            }
           />
           <Legend />
           {visibleMetrics.has('total_tickets') && (

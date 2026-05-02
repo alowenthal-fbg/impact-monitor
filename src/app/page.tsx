@@ -5,6 +5,7 @@ import { KPICard } from '@/components/kpi-card';
 import { WeekSelector } from '@/components/week-selector';
 import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
 import { SportBreakdownPanel } from '@/components/sport-breakdown';
+import { SportSeasonalityChart } from '@/components/sport-seasonality-chart';
 import { TopEventsTable } from '@/components/top-events-table';
 import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
@@ -121,6 +122,10 @@ export default function DashboardPage() {
             sportData={sportData ?? []}
             isLoading={sportLoading}
           />
+        </div>
+
+        <div className="mt-8">
+          <SportSeasonalityChart />
         </div>
 
         <div className="mt-8">
