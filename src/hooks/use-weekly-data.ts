@@ -9,10 +9,12 @@ export interface WeeklyKPIs {
   totalOrders: number;
   totalGtv: number;
   avgOrderValue: number;
+  totalGrossProfit: number;
   ticketsWow: number | null;
   ordersWow: number | null;
   gtvWow: number | null;
   avgOrderValueWow: number | null;
+  grossProfitWow: number | null;
   isCurrentWeek: boolean;
 }
 
@@ -63,10 +65,12 @@ export function useWeeklyData(weekStart: string, currentWeekStart: string) {
         totalOrders,
         totalGtv,
         avgOrderValue,
+        totalGrossProfit: cur.total_gross_profit ?? 0,
         ticketsWow: calcWow(cur.total_tickets, prev?.total_tickets ?? null),
         ordersWow: calcWow(cur.total_orders, prev?.total_orders ?? null),
         gtvWow: calcWow(cur.total_gtv, prev?.total_gtv ?? null),
         avgOrderValueWow: calcWow(avgOrderValue, prevAvg || null),
+        grossProfitWow: calcWow(cur.total_gross_profit, prev?.total_gross_profit ?? null),
         isCurrentWeek: weekStart === currentWeekStart,
       };
     },

@@ -17,7 +17,7 @@ export function useTopEvents(weekStart: string, weekEnd: string) {
       const { data, error } = await supabase
         .from('daily_metrics')
         .select('sport, event_name, gtv')
-        .eq('source', 'reconciled')
+        .eq('source', 'tm_api')
         .gte('metric_date', weekStart)
         .lte('metric_date', weekEnd)
         .not('event_name', 'is', null);

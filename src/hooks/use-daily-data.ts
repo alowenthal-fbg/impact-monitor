@@ -18,7 +18,7 @@ export function useDailyData(weekStart: string, weekEnd: string) {
       const { data, error } = await supabase
         .from('daily_metrics')
         .select('sport, tickets_sold, gtv')
-        .eq('source', 'reconciled')
+        .eq('source', 'tm_api')
         .gte('metric_date', weekStart)
         .lte('metric_date', weekEnd)
         .not('sport', 'is', null);

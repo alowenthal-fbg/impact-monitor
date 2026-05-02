@@ -34,19 +34,37 @@ CREATE TABLE subscribers (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- weekly_summary: aggregates daily_metrics by Mon-Sun week
+-- weekly_summary: Impact API is primary source; Snowflake provides gross_profit only
 CREATE VIEW weekly_summary AS
+WITH tm AS (
+  SELECT
+    date_trunc('week', metric_date)::date AS week_start,
+    SUM(tickets_sold) AS total_tickets,
+    SUM(orders) AS total_orders,
+    SUM(gtv) AS total_gtv,
+    SUM(face_value) AS total_face_value
+  FROM daily_metrics
+  WHERE source = 'tm_api'
+  GROUP BY week_start
+),
+sf AS (
+  SELECT
+    date_trunc('week', metric_date)::date AS week_start,
+    SUM(gross_profit) AS total_gross_profit
+  FROM daily_metrics
+  WHERE source = 'snowflake'
+  GROUP BY week_start
+)
 SELECT
-  date_trunc('week', metric_date + INTERVAL '1 day') - INTERVAL '1 day' AS week_start,
-  SUM(tickets_sold) AS total_tickets,
-  SUM(orders) AS total_orders,
-  SUM(gtv) AS total_gtv,
-  SUM(face_value) AS total_face_value,
-  SUM(gross_profit) AS total_gross_profit
-FROM daily_metrics
-WHERE source = 'reconciled'
-GROUP BY week_start
-ORDER BY week_start DESC;
+  tm.week_start,
+  tm.total_tickets,
+  tm.total_orders,
+  tm.total_gtv,
+  tm.total_face_value,
+  sf.total_gross_profit
+FROM tm
+LEFT JOIN sf ON sf.week_start = tm.week_start
+ORDER BY tm.week_start DESC;
 
 -- Row Level Security
 ALTER TABLE daily_metrics ENABLE ROW LEVEL SECURITY;

@@ -20,6 +20,7 @@ function buildReportUrl(startDate: string, endDate: string): string {
   );
   url.searchParams.set('START_DATE', startDate);
   url.searchParams.set('END_DATE', endDate);
+  url.searchParams.set('CAMPAIGN', 'Ticketmaster');
   // Include all relevant superstatuses
   url.searchParams.append('SUPERSTATUS_MS', 'APPROVED');
   url.searchParams.append('SUPERSTATUS_MS', 'NA');

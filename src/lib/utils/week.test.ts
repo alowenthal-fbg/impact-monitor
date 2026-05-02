@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { toZonedTime } from 'date-fns-tz';
-import { getWeekStart, getWeekEnd, getCurrentWeek, isMonday } from './week';
+import { getWeekStart, getWeekEnd, getCurrentWeek, isMonday, getISOWeekNumber, formatWeekLabel } from './week';
 
 const ET = 'America/New_York';
 
@@ -111,6 +111,34 @@ describe('Week Boundary Utility', () => {
       // 2026-04-27 Monday at 03:00 UTC = Sunday 23:00 ET (EDT is UTC-4)
       const veryEarlyMondayUTC = new Date('2026-04-27T03:00:00Z');
       expect(isMonday(veryEarlyMondayUTC)).toBe(false);
+    });
+  });
+
+  describe('getISOWeekNumber', () => {
+    it('returns W17 for April 20, 2026 (Monday)', () => {
+      expect(getISOWeekNumber('2026-04-20')).toBe(17);
+    });
+
+    it('returns W17 for April 26, 2026 (Sunday)', () => {
+      expect(getISOWeekNumber('2026-04-26')).toBe(17);
+    });
+
+    it('returns W18 for April 27, 2026 (Monday)', () => {
+      expect(getISOWeekNumber('2026-04-27')).toBe(18);
+    });
+
+    it('returns W1 for Jan 5, 2026 (Monday)', () => {
+      expect(getISOWeekNumber('2026-01-05')).toBe(2);
+    });
+  });
+
+  describe('formatWeekLabel', () => {
+    it('formats Apr 20-26 as "Apr 20 - Apr 26 (W17)"', () => {
+      expect(formatWeekLabel('2026-04-20')).toBe('Apr 20 - Apr 26 (W17)');
+    });
+
+    it('handles month boundary: Apr 27 - May 3', () => {
+      expect(formatWeekLabel('2026-04-27')).toBe('Apr 27 - May 3 (W18)');
     });
   });
 });

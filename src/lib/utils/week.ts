@@ -40,10 +40,22 @@ export function isMonday(date?: Date): boolean {
 }
 
 /**
- * Formats a week_start date string as "Mon D - Mon D" (e.g., "Apr 27 - May 3").
+ * Returns the ISO week number for a date string (yyyy-MM-dd).
+ */
+export function getISOWeekNumber(dateStr: string): number {
+  const date = new Date(dateStr + 'T00:00:00');
+  const thursday = new Date(date);
+  thursday.setDate(thursday.getDate() + (4 - (thursday.getDay() || 7)));
+  const yearStart = new Date(thursday.getFullYear(), 0, 1);
+  return Math.ceil(((thursday.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+/**
+ * Formats a week_start date string as "Mon D - Mon D (W##)" (e.g., "Apr 20 - Apr 26 (W17)").
  */
 export function formatWeekLabel(weekStartStr: string): string {
   const weekStart = new Date(weekStartStr + 'T00:00:00');
   const weekEnd = addDays(weekStart, 6);
-  return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d')}`;
+  const weekNum = getISOWeekNumber(weekStartStr);
+  return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d')} (W${weekNum})`;
 }

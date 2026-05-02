@@ -30,12 +30,7 @@ export function generateSubjectLine(
   return `Week ${weekNumber}: ${ticketsText}, ${gtvText}`;
 }
 
-export function getWeekNumber(dateStr: string): number {
-  const date = new Date(dateStr + 'T00:00:00');
-  const startOfYear = new Date(date.getFullYear(), 0, 1);
-  const days = Math.floor((date.getTime() - startOfYear.getTime()) / 86400000);
-  return Math.ceil((days + startOfYear.getDay() + 1) / 7);
-}
+export { getISOWeekNumber as getWeekNumber } from '../utils/week';
 
 function renderKpiRow(label: string, value: string | number, wow: number | null): string {
   const displayValue = typeof value === 'number' ? value.toLocaleString() : value;

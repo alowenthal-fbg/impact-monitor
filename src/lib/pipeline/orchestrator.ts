@@ -1,10 +1,9 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { pullTicketmasterData } from '@/lib/pipeline/ticketmaster';
 import { fetchSnowflakeData } from '@/lib/pipeline/snowflake';
-import { reconcileDailyMetrics } from '@/lib/pipeline/reconcile';
 import { sendMondayEmail } from '@/lib/email/send';
 import { isMonday } from '@/lib/utils/week';
-import { format, subDays } from 'date-fns';
+import { format, startOfYear } from 'date-fns';
 import type { WeekData } from '@/lib/ai/narrative';
 
 export interface StageResult {
@@ -18,7 +17,6 @@ export interface PipelineResult {
   stages: {
     tmPull: StageResult;
     snowflakePull: StageResult;
-    reconciliation: StageResult;
   };
   runId: string;
   startedAt: string;
@@ -48,9 +46,9 @@ export async function runFullPipeline(): Promise<PipelineResult> {
   const startedAt = new Date().toISOString();
   const pipelineStart = Date.now();
 
-  // Date range: last 14 days to handle late-arriving data
+  // Date range: YTD (full year-to-date for complete historical data)
   const endDate = format(new Date(), 'yyyy-MM-dd');
-  const startDate = format(subDays(new Date(), 14), 'yyyy-MM-dd');
+  const startDate = format(startOfYear(new Date()), 'yyyy-MM-dd');
 
   // Initialize pipeline run record
   const { data: run, error: runError } = await supabase
@@ -91,27 +89,8 @@ export async function runFullPipeline(): Promise<PipelineResult> {
     completed_at: new Date().toISOString(),
   });
 
-  // Stage 3: Reconciliation (only if at least one source succeeded)
-  let reconciliation: StageResult;
-  if (tmPull.success || snowflakePull.success) {
-    reconciliation = await runStage('reconciliation', () =>
-      reconcileDailyMetrics(startDate, endDate).then(() => undefined)
-    );
-  } else {
-    reconciliation = { success: false, error: 'Skipped: no source data available', durationMs: 0 };
-  }
-
-  // Log reconciliation stage
-  await supabase.from('pipeline_runs').insert({
-    started_at: startedAt,
-    stage: 'reconciliation',
-    status: reconciliation.success ? 'success' : 'failed',
-    error_message: reconciliation.error || null,
-    completed_at: new Date().toISOString(),
-  });
-
   // Determine overall status
-  const stages = { tmPull, snowflakePull, reconciliation };
+  const stages = { tmPull, snowflakePull };
   const allSuccess = Object.values(stages).every((s) => s.success);
   const allFailed = Object.values(stages).every((s) => !s.success);
   const overallStatus = allSuccess ? 'success' : allFailed ? 'failed' : 'partial';

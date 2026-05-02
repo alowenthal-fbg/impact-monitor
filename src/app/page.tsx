@@ -70,7 +70,7 @@ export default function DashboardPage() {
       )}
 
       <div id="dashboard-export-target" className="mt-8 rounded-lg bg-white p-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
           <KPICard
             title="Total Tickets Sold"
             value={kpiData?.totalTickets ?? 0}
@@ -97,6 +97,13 @@ export default function DashboardPage() {
             value={kpiData?.avgOrderValue ?? 0}
             unit="currency"
             wowDelta={kpiData?.avgOrderValueWow ?? null}
+            isLoading={kpiLoading}
+          />
+          <KPICard
+            title="Gross Profit"
+            value={kpiData?.totalGrossProfit ?? 0}
+            unit="currency"
+            wowDelta={kpiData?.grossProfitWow ?? null}
             isLoading={kpiLoading}
           />
         </div>
