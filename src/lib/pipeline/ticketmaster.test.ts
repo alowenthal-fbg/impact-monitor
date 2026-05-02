@@ -28,7 +28,7 @@ const sampleOrders: ImpactOrder[] = [
   {
     actionDate: '2026-04-30T23:27:59-0400',
     eventName: 'Milwaukee Brewers vs. Chicago Cubs',
-    category: 'Sports',
+    category: 'Baseball',
     orders: 1,
     tickets: 3,
     gtv: 538.96,
@@ -38,7 +38,7 @@ const sampleOrders: ImpactOrder[] = [
   {
     actionDate: '2026-04-30T22:48:14-0400',
     eventName: 'East Conf Qtrs: 76ers at Celtics Rd 1 Hm Gm 4',
-    category: 'Sports',
+    category: 'Basketball',
     orders: 1,
     tickets: 2,
     gtv: 360.0,
@@ -48,7 +48,7 @@ const sampleOrders: ImpactOrder[] = [
   {
     actionDate: '2026-04-30T10:00:00-0400',
     eventName: 'Milwaukee Brewers vs. Chicago Cubs',
-    category: 'Sports',
+    category: 'Baseball',
     orders: 1,
     tickets: 4,
     gtv: 250.0,
@@ -82,7 +82,7 @@ describe('parseCsv', () => {
 
     expect(orders[0]).toMatchObject({
       eventName: 'Milwaukee Brewers vs. Chicago Cubs',
-      category: 'Sports',
+      category: 'Baseball',
       tickets: 3,
       gtv: 538.96,
       face: 444.0,
@@ -110,7 +110,7 @@ describe('transformOrders', () => {
       orders: 2,
       gtv: 788.96,
       face_value: 644.0,
-      sport: 'Sports',
+      sport: 'Baseball',
       source: 'tm_api',
       gross_profit: null,
     });

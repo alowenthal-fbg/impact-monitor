@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { KPICard } from '@/components/kpi-card';
 import { WeekSelector } from '@/components/week-selector';
 import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
-import { SportBreakdown } from '@/components/sport-breakdown';
+import { SportBreakdownPanel } from '@/components/sport-breakdown';
 import { TopEventsTable } from '@/components/top-events-table';
 import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
@@ -116,15 +116,9 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <SportBreakdown
+        <div className="mt-8">
+          <SportBreakdownPanel
             sportData={sportData ?? []}
-            metric="tickets"
-            isLoading={sportLoading}
-          />
-          <SportBreakdown
-            sportData={sportData ?? []}
-            metric="gtv"
             isLoading={sportLoading}
           />
         </div>

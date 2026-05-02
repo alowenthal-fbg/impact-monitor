@@ -136,7 +136,7 @@ function parseCsv(csv: string): ImpactOrder[] {
 
   const iActionDate = colIndex('Action_Date');
   const iEventName = colIndex('event_name');
-  const iCategory = colIndex('Category');
+  const iCategory = colIndex('sub_category');
   const iOrders = colIndex('Orders');
   const iTickets = colIndex('Tickets');
   const iGtv = colIndex('GTV');
