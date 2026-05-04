@@ -10,7 +10,7 @@ import { SportSeasonalityChart } from '@/components/sport-seasonality-chart';
 import { TopEventsTable } from '@/components/top-events-table';
 import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
-import { TalkTrackDownload } from '@/components/talk-track-download';
+import { TalkTrackDownload } from '@/components/weekly-summary-download';
 import { SubscriberManager } from '@/components/subscriber-manager';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';

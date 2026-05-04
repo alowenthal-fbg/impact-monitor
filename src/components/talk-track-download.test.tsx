@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { TalkTrackDownload } from './talk-track-download';
+import { TalkTrackDownload } from './weekly-summary-download';
 
 afterEach(cleanup);
 
