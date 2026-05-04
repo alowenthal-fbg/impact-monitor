@@ -71,13 +71,13 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
 
   if (isLoading) {
     return (
-      <div className="h-[380px] w-full animate-pulse rounded-lg bg-gray-200" />
+      <div className="h-[380px] w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
     );
   }
 
   if (trendData.length === 0) {
     return (
-      <div className="flex h-[380px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400">
+      <div className="flex h-[380px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
         No trend data available
       </div>
     );
@@ -92,9 +92,9 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
   const hasRightAxis = visibleMetrics.has('total_gtv');
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           {isWeekly ? 'Weekly' : 'Monthly'} Trends
         </h2>
 
@@ -108,7 +108,7 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
                 className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                   visibleMetrics.has(key)
                     ? 'border-transparent text-white'
-                    : 'border-gray-300 bg-white text-gray-400'
+                    : 'border-gray-300 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500'
                 }`}
                 style={
                   visibleMetrics.has(key) ? { backgroundColor: color } : undefined
@@ -120,11 +120,11 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
           </div>
 
           {/* Weekly / Monthly toggle */}
-          <div className="flex rounded-lg border border-gray-300 bg-gray-100 p-0.5">
+          <div className="flex rounded-lg border border-gray-300 bg-gray-100 p-0.5 dark:border-gray-600 dark:bg-gray-700">
             <button
               onClick={() => setViewMode('weekly')}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                isWeekly ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                isWeekly ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
               Weekly
@@ -132,7 +132,7 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
             <button
               onClick={() => setViewMode('monthly')}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                !isWeekly ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                !isWeekly ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
               Monthly
@@ -143,17 +143,19 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
 
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
           <XAxis
             dataKey={xKey}
             tickFormatter={isWeekly ? (v) => formatWeekLabel(v).split(' - ')[0] : formatMonthLabel}
             fontSize={12}
+            tick={{ fill: 'var(--chart-tick)' }}
           />
           {hasLeftAxis && (
             <YAxis
               yAxisId="left"
               tickFormatter={formatTicketAxis}
               fontSize={12}
+              tick={{ fill: 'var(--chart-tick)' }}
             />
           )}
           {hasRightAxis && (
@@ -162,6 +164,7 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
               orientation="right"
               tickFormatter={formatGtvAxis}
               fontSize={12}
+              tick={{ fill: 'var(--chart-tick)' }}
             />
           )}
           <Tooltip
@@ -171,7 +174,7 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
                 (a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)
               );
               return (
-                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+                <div className="rounded-lg border border-gray-200 bg-white p-3 text-gray-900 shadow-lg">
                   <p className="mb-2 text-xs font-medium text-gray-600">
                     {isWeekly ? formatWeekLabel(String(label)) : formatMonthLabel(String(label))}
                   </p>
@@ -185,7 +188,7 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
                           style={{ backgroundColor: entry.color }}
                         />
                         <span className="text-gray-700">{entry.name}</span>
-                        <span className="ml-auto font-medium">{formatted}</span>
+                        <span className="ml-auto font-medium text-gray-900">{formatted}</span>
                       </div>
                     );
                   })}
@@ -193,7 +196,21 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
               );
             }}
           />
-          <Legend />
+          <Legend
+            content={() => (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                {METRICS.filter((m) => visibleMetrics.has(m.key)).map(({ key, label, color }) => (
+                  <span
+                    key={key}
+                    className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-900 dark:bg-gray-700 dark:text-gray-100"
+                    style={{ borderBottom: `3px solid ${color}` }}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
+          />
           {visibleMetrics.has('total_tickets') && (
             <Area
               yAxisId="left"

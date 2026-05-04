@@ -91,8 +91,8 @@ export function SubscriberManager() {
   }
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-md">
-      <h2 className="mb-4 text-xl font-bold text-gray-900">Email Subscribers</h2>
+    <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-900">
+      <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-gray-100">Email Subscribers</h2>
 
       <div className="mb-6">
         <div className="flex gap-2">
@@ -102,7 +102,7 @@ export function SubscriberManager() {
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder="Enter email address"
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
           />
           <button
             onClick={handleAdd}
@@ -112,20 +112,20 @@ export function SubscriberManager() {
             {addMutation.isPending ? 'Adding...' : 'Add'}
           </button>
         </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
 
       <div>
         {isLoading ? (
-          <p className="text-gray-500">Loading subscribers...</p>
+          <p className="text-gray-500 dark:text-gray-400">Loading subscribers...</p>
         ) : subscribers && subscribers.length > 0 ? (
           <ul className="space-y-2">
             {subscribers.map((subscriber) => (
               <li
                 key={subscriber.id}
-                className="flex items-center justify-between rounded-lg bg-gray-50 p-3"
+                className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-800"
               >
-                <span className="text-gray-900">{subscriber.email}</span>
+                <span className="text-gray-900 dark:text-gray-100">{subscriber.email}</span>
                 <button
                   onClick={() => handleRemove(subscriber.id)}
                   disabled={removeMutation.isPending}
@@ -137,7 +137,7 @@ export function SubscriberManager() {
             ))}
           </ul>
         ) : (
-          <p className="text-gray-500">No subscribers yet.</p>
+          <p className="text-gray-500 dark:text-gray-400">No subscribers yet.</p>
         )}
       </div>
     </div>

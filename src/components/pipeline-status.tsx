@@ -11,17 +11,17 @@ interface PipelineStatusProps {
 
 const statusConfig = {
   success: {
-    color: 'border-green-200 bg-green-50 text-green-800',
+    color: 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
     icon: '\u2713',
     label: 'Pipeline Healthy',
   },
   partial: {
-    color: 'border-yellow-200 bg-yellow-50 text-yellow-800',
+    color: 'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
     icon: '\u26A0',
     label: 'Partial Success',
   },
   failed: {
-    color: 'border-red-200 bg-red-50 text-red-800',
+    color: 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-300',
     icon: '\u2715',
     label: 'Pipeline Failed',
   },
@@ -29,12 +29,12 @@ const statusConfig = {
 
 export function PipelineStatus({ status, timestamp, errorMessage, isLoading }: PipelineStatusProps) {
   if (isLoading) {
-    return <div className="h-16 animate-pulse rounded-lg bg-gray-200" />;
+    return <div className="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />;
   }
 
   if (!status || !timestamp) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
         No pipeline data available
       </div>
     );

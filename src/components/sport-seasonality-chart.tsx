@@ -48,7 +48,7 @@ const SPORT_COLORS: Record<string, string> = {
   Baseball: '#005A9C',
   Basketball: '#F58426',
   Football: '#013369',
-  Hockey: '#000000',
+  Hockey: '#A5A5A5',
   Soccer: '#6CC24A',
   Wrestling: '#8B0000',
   Lacrosse: '#5B2C6F',
@@ -152,43 +152,43 @@ export function SportSeasonalityChart() {
   const eventsByWeek = useMemo(() => buildEventsByWeek(eventMarkers), [eventMarkers]);
 
   if (isLoading) {
-    return <div className="h-[420px] w-full animate-pulse rounded-lg bg-gray-200" />;
+    return <div className="h-[420px] w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />;
   }
 
   if (!result || result.data.length === 0) {
     return (
-      <div className="flex h-[420px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400">
+      <div className="flex h-[420px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
         No seasonality data available
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Sport Seasonality</h2>
-          <p className="text-sm text-gray-500">Weekly ticket volume by sport (YTD)</p>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Sport Seasonality</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Weekly ticket volume by sport (YTD)</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowEvents((v) => !v)}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               showEvents
-                ? 'border-gray-700 bg-gray-700 text-white'
-                : 'border-gray-300 bg-white text-gray-400'
+                ? 'border-gray-700 bg-gray-700 text-white dark:border-gray-500 dark:bg-gray-500'
+                : 'border-gray-300 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500'
             }`}
           >
             Events
           </button>
-          <span className="mx-1 h-4 w-px bg-gray-300" />
+          <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
           {rankedSports.map((sport, i) => (
             <button
               key={sport}
               onClick={() => toggleSport(sport)}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 hiddenSports.has(sport)
-                  ? 'border-gray-300 bg-white text-gray-400'
+                  ? 'border-gray-300 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500'
                   : 'border-transparent text-white'
               }`}
               style={
@@ -205,13 +205,14 @@ export function SportSeasonalityChart() {
 
       <ResponsiveContainer width="100%" height={340}>
         <LineChart data={result.data}>
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
           <XAxis
             dataKey="week_start"
             tickFormatter={(v) => formatWeekLabel(v).split(' - ')[0]}
             fontSize={12}
+            tick={{ fill: 'var(--chart-tick)' }}
           />
-          <YAxis tickFormatter={formatTicketAxis} fontSize={12} />
+          <YAxis tickFormatter={formatTicketAxis} fontSize={12} tick={{ fill: 'var(--chart-tick)' }} />
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;
@@ -221,7 +222,7 @@ export function SportSeasonalityChart() {
                 (a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)
               );
               return (
-                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+                <div className="rounded-lg border border-gray-200 bg-white p-3 text-gray-900 shadow-lg">
                   {events && events.length > 0 && (
                     <div className="mb-2 space-y-0.5">
                       {events.map((evt) => (
@@ -249,14 +250,30 @@ export function SportSeasonalityChart() {
                         style={{ backgroundColor: entry.color }}
                       />
                       <span className="text-gray-700">{sportWithEmoji(String(entry.name))}</span>
-                      <span className="ml-auto font-medium">{Number(entry.value).toLocaleString()}</span>
+                      <span className="ml-auto font-medium text-gray-900">{Number(entry.value).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
               );
             }}
           />
-          <Legend />
+          <Legend
+            content={() => (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                {rankedSports
+                  .filter((s) => !hiddenSports.has(s))
+                  .map((sport) => (
+                    <span
+                      key={sport}
+                      className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-900 dark:bg-gray-700 dark:text-gray-100"
+                      style={{ borderBottom: `3px solid ${getColor(sport, rankedSports.indexOf(sport))}` }}
+                    >
+                      {sportWithEmoji(sport)}
+                    </span>
+                  ))}
+              </div>
+            )}
+          />
           {rankedSports
             .filter((sport) => !hiddenSports.has(sport))
             .map((sport, i) => (

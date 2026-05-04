@@ -109,13 +109,13 @@ export function SportBreakdownPanel({ sportData, isLoading }: SportBreakdownPane
 
   if (isLoading) {
     return (
-      <div className="h-[380px] w-full animate-pulse rounded-lg bg-gray-200" />
+      <div className="h-[380px] w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
     );
   }
 
   if (sportData.length === 0) {
     return (
-      <div className="flex h-[380px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400">
+      <div className="flex h-[380px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
         No sport data available
       </div>
     );
@@ -124,18 +124,18 @@ export function SportBreakdownPanel({ sportData, isLoading }: SportBreakdownPane
   const tabLabel = TABS.find((t) => t.key === activeTab)!.label;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-gray-900">By Sport</h2>
-        <div className="flex rounded-lg border border-gray-300 bg-gray-100 p-0.5">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">By Sport</h2>
+        <div className="flex rounded-lg border border-gray-300 bg-gray-100 p-0.5 dark:border-gray-600 dark:bg-gray-700">
           {TABS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 activeTab === key
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               }`}
             >
               {label}
@@ -146,10 +146,13 @@ export function SportBreakdownPanel({ sportData, isLoading }: SportBreakdownPane
 
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="sportLabel" fontSize={12} />
-          <YAxis tickFormatter={config.formatAxis} fontSize={12} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+          <XAxis dataKey="sportLabel" fontSize={12} tick={{ fill: 'var(--chart-tick)' }} />
+          <YAxis tickFormatter={config.formatAxis} fontSize={12} tick={{ fill: 'var(--chart-tick)' }} />
           <Tooltip
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', color: '#111827' }}
+            labelStyle={{ color: '#4b5563' }}
+            itemStyle={{ color: '#111827' }}
             formatter={(value) => {
               const v = Number(value);
               const label = config.isCurrency
@@ -164,6 +167,7 @@ export function SportBreakdownPanel({ sportData, isLoading }: SportBreakdownPane
               dataKey={config.dataKey}
               position="top"
               fontSize={11}
+              fill="var(--chart-tick)"
               formatter={(value) => config.formatValue(Number(value))}
             />
           </Bar>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { KPICard } from '@/components/kpi-card';
 import { WeekSelector } from '@/components/week-selector';
 import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
@@ -11,6 +12,7 @@ import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
 import { TalkTrackDownload } from '@/components/talk-track-download';
 import { SubscriberManager } from '@/components/subscriber-manager';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
 import { useTrendData } from '@/hooks/use-trend-data';
 import { useDailyData } from '@/hooks/use-daily-data';
@@ -42,10 +44,26 @@ export default function DashboardPage() {
   const { data: pipelineStatus, isLoading: statusLoading } = usePipelineStatus();
 
   return (
-    <div className="flex min-h-screen flex-col p-8">
+    <div className="flex min-h-screen flex-col bg-background p-8 text-foreground">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <h1 className="text-3xl font-bold text-gray-900">Impact Monitor</h1>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/fanatics-flag-black.svg"
+              alt="Fanatics"
+              width={24}
+              height={20}
+              className="block dark:hidden"
+            />
+            <Image
+              src="/fanatics-flag-white.svg"
+              alt="Fanatics"
+              width={24}
+              height={20}
+              className="hidden dark:block"
+            />
+            <h1 className="text-3xl font-bold">Fanatics Tickets</h1>
+          </div>
           <PipelineStatus
             status={pipelineStatus?.status}
             timestamp={pipelineStatus?.created_at}
@@ -61,16 +79,17 @@ export default function DashboardPage() {
             currentWeekStart={currentWeekStart}
             onChange={setSelectedWeek}
           />
+          <ThemeToggle />
         </div>
       </div>
 
       {error && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
           Failed to load data: {error.message}
         </div>
       )}
 
-      <div id="dashboard-export-target" className="mt-8 rounded-lg bg-white p-6">
+      <div id="dashboard-export-target" className="mt-8 rounded-lg bg-white p-6 dark:bg-gray-900">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
           <KPICard
             title="Total Tickets Sold"
@@ -123,7 +142,7 @@ export default function DashboardPage() {
             isLoading={sportLoading}
           />
           <div>
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Top Events This Week</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Top Events This Week</h2>
             <TopEventsTable events={topEvents ?? []} isLoading={eventsLoading} />
           </div>
         </div>
@@ -134,7 +153,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-12">
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">Admin Settings</h2>
+        <h2 className="mb-6 text-2xl font-bold text-foreground">Admin Settings</h2>
         <SubscriberManager />
       </div>
     </div>

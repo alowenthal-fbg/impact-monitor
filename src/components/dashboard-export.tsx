@@ -18,13 +18,14 @@ export function DashboardExport({ weekStart }: DashboardExportProps) {
         throw new Error('Export target not found');
       }
 
+      const isDark = document.documentElement.classList.contains('dark');
       const dataUrl = await toPng(element, {
         pixelRatio: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
       });
 
       const link = document.createElement('a');
-      link.download = `impact-monitor-week-${weekStart}.png`;
+      link.download = `fanatics-tickets-week-${weekStart}.png`;
       link.href = dataUrl;
       link.click();
     } catch (error) {

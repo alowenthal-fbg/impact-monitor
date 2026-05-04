@@ -31,7 +31,7 @@ export function TopEventsTable({ events, isLoading }: TopEventsTableProps) {
     return (
       <div className="space-y-2">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-12 animate-pulse rounded bg-gray-200" />
+          <div key={i} className="h-12 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
         ))}
       </div>
     );
@@ -39,38 +39,38 @@ export function TopEventsTable({ events, isLoading }: TopEventsTableProps) {
 
   if (!events || events.length === 0) {
     return (
-      <div className="flex h-[200px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400">
+      <div className="flex h-[200px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
         No events found for this week.
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+            <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
               Sport
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+            <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
               Event
             </th>
-            <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">
+            <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
               GTV
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
+        <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
           {events.map((event, idx) => (
             <tr key={idx}>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
                 {SPORT_EMOJI[event.sport] ? `${SPORT_EMOJI[event.sport]} ` : ''}{event.sport}
               </td>
-              <td className="px-6 py-4 text-sm text-gray-500">
+              <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                 {event.event_name}
               </td>
-              <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">
+              <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900 dark:text-gray-100">
                 ${event.gtv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </td>
             </tr>

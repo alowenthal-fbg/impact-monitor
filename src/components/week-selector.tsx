@@ -13,7 +13,7 @@ export function WeekSelector({ selectedWeek, currentWeekStart, onChange }: WeekS
   const { data: weeks, isLoading } = useAvailableWeeks();
 
   if (isLoading) {
-    return <div className="h-10 w-56 animate-pulse rounded bg-gray-200" />;
+    return <div className="h-10 w-56 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />;
   }
 
   return (
@@ -21,7 +21,7 @@ export function WeekSelector({ selectedWeek, currentWeekStart, onChange }: WeekS
       <select
         value={selectedWeek}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
       >
         {weeks?.map((week) => (
           <option key={week} value={week}>
@@ -31,7 +31,7 @@ export function WeekSelector({ selectedWeek, currentWeekStart, onChange }: WeekS
         ))}
       </select>
       {selectedWeek === currentWeekStart && (
-        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
           In Progress
         </span>
       )}
