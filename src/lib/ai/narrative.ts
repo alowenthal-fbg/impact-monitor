@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
+  authToken: process.env.BEDROCK_API_TOKEN!,
+  baseURL: process.env.BEDROCK_BASE_URL ?? 'https://bedrock-mantle.us-east-1.api.aws/anthropic',
 });
 
 export interface WeekData {
@@ -38,7 +39,7 @@ Previous week: ${prevWeekData ? `${prevWeekData.totalTickets.toLocaleString()} t
 Write a 2-4 sentence summary suitable for an email. Focus on the headline performance (tickets, GTV), note the week-over-week trend (up/down), and provide context if the change is significant. Keep the tone professional but conversational. Do not use markdown formatting.`;
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'anthropic.claude-opus-4-7',
     max_tokens: 300,
     messages: [{ role: 'user', content: prompt }],
   });

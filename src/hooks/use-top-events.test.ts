@@ -54,13 +54,15 @@ describe('useTopEvents', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data).toHaveLength(5);
+    expect(result.current.data!.events).toHaveLength(5);
     // Super Bowl aggregated: 5000 + 3000 = 8000, should be first
-    expect(result.current.data![0].event_name).toBe('Super Bowl');
-    expect(result.current.data![0].gtv).toBe(8000);
+    expect(result.current.data!.events[0].event_name).toBe('Super Bowl');
+    expect(result.current.data!.events[0].gtv).toBe(8000);
     // Finals G7 second
-    expect(result.current.data![1].event_name).toBe('Finals G7');
-    expect(result.current.data![1].gtv).toBe(4000);
+    expect(result.current.data!.events[1].event_name).toBe('Finals G7');
+    expect(result.current.data!.events[1].gtv).toBe(4000);
+    // weeklyGtv is sum of all rows
+    expect(result.current.data!.weeklyGtv).toBe(17000);
   });
 
   it('returns empty array when no data', async () => {
@@ -80,7 +82,8 @@ describe('useTopEvents', () => {
     );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toHaveLength(0);
+    expect(result.current.data!.events).toHaveLength(0);
+    expect(result.current.data!.weeklyGtv).toBe(0);
   });
 
   it('throws on supabase error', async () => {

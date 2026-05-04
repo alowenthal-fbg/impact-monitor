@@ -10,9 +10,10 @@ describe('TopEventsTable', () => {
     { sport: 'NBA', event_name: 'Finals Game 7', gtv: 85000 },
     { sport: 'MLB', event_name: 'World Series G1', gtv: 45000.25 },
   ];
+  const mockWeeklyGtv = 500000;
 
   it('renders table with event data', () => {
-    render(<TopEventsTable events={mockEvents} />);
+    render(<TopEventsTable events={mockEvents} weeklyGtv={mockWeeklyGtv} />);
 
     expect(screen.getByText('Super Bowl LVIII')).toBeDefined();
     expect(screen.getByText('Finals Game 7')).toBeDefined();
@@ -20,26 +21,32 @@ describe('TopEventsTable', () => {
   });
 
   it('formats GTV as currency', () => {
-    const { container } = render(<TopEventsTable events={mockEvents} />);
+    const { container } = render(<TopEventsTable events={mockEvents} weeklyGtv={mockWeeklyGtv} />);
     const cells = container.querySelectorAll('td.text-right');
     expect(cells[0].textContent).toContain('125,000.50');
-    expect(cells[1].textContent).toContain('85,000.00');
-    expect(cells[2].textContent).toContain('45,000.25');
+    expect(cells[2].textContent).toContain('85,000.00');
+    expect(cells[4].textContent).toContain('45,000.25');
   });
 
-  it('renders three column headers', () => {
-    render(<TopEventsTable events={mockEvents} />);
-    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+  it('renders four column headers', () => {
+    render(<TopEventsTable events={mockEvents} weeklyGtv={mockWeeklyGtv} />);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+  });
+
+  it('shows percentage of weekly GTV', () => {
+    render(<TopEventsTable events={mockEvents} weeklyGtv={mockWeeklyGtv} />);
+    expect(screen.getByText('25.0%')).toBeDefined(); // 125000.5 / 500000
+    expect(screen.getByText('17.0%')).toBeDefined(); // 85000 / 500000
   });
 
   it('shows loading skeleton', () => {
-    const { container } = render(<TopEventsTable events={[]} isLoading={true} />);
+    const { container } = render(<TopEventsTable events={[]} weeklyGtv={0} isLoading={true} />);
     const skeletons = container.querySelectorAll('.animate-pulse');
     expect(skeletons.length).toBe(5);
   });
 
   it('shows empty state when no events', () => {
-    render(<TopEventsTable events={[]} />);
+    render(<TopEventsTable events={[]} weeklyGtv={0} />);
     expect(screen.getByText('No events found for this week.')).toBeDefined();
   });
 });

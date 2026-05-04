@@ -23,10 +23,11 @@ const SPORT_EMOJI: Record<string, string> = {
 
 interface TopEventsTableProps {
   events: TopEvent[];
+  weeklyGtv: number;
   isLoading?: boolean;
 }
 
-export function TopEventsTable({ events, isLoading }: TopEventsTableProps) {
+export function TopEventsTable({ events, weeklyGtv, isLoading }: TopEventsTableProps) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -59,6 +60,9 @@ export function TopEventsTable({ events, isLoading }: TopEventsTableProps) {
             <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
               GTV
             </th>
+            <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              % of Week
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
@@ -72,6 +76,9 @@ export function TopEventsTable({ events, isLoading }: TopEventsTableProps) {
               </td>
               <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900 dark:text-gray-100">
                 ${event.gtv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+              <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900 dark:text-gray-100">
+                {weeklyGtv > 0 ? `${((event.gtv / weeklyGtv) * 100).toFixed(1)}%` : '—'}
               </td>
             </tr>
           ))}

@@ -2,7 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { WeekData } from './narrative';
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
+  authToken: process.env.BEDROCK_API_TOKEN!,
+  baseURL: process.env.BEDROCK_BASE_URL ?? 'https://bedrock-mantle.us-east-1.api.aws/anthropic',
 });
 
 export interface SportBreakdown {
@@ -79,7 +80,7 @@ Structure your talk track with these sections:
 Write in a conversational, confident tone suitable for verbal delivery. Use numbers strategically (cite WoW deltas, top sports, marquee events). Keep the total length to 10-15 sentences. Do not use markdown formatting or section headers in the output — just write the script as a flowing narrative.`;
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'anthropic.claude-opus-4-7',
     max_tokens: 1500,
     messages: [{ role: 'user', content: prompt }],
   });

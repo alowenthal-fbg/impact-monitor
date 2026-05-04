@@ -50,7 +50,7 @@ describe('generateNarrative', () => {
     await generateNarrative(weekData, prevWeekData);
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'claude-sonnet-4-20250514',
+        model: 'anthropic.claude-opus-4-7',
         max_tokens: 300,
       })
     );
