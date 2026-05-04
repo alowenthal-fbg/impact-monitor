@@ -36,6 +36,7 @@ const SPORT_EMOJI: Record<string, string> = {
   Volleyball: '\uD83C\uDFD0',
   Cricket: '\uD83C\uDFCF',
   Rugby: '\uD83C\uDFC9',
+  Equestrian: '\uD83D\uDC34',
 };
 
 function sportWithEmoji(sport: string): string {

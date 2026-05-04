@@ -117,20 +117,19 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <SportBreakdownPanel
             sportData={sportData ?? []}
             isLoading={sportLoading}
           />
+          <div>
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">Top Events This Week</h2>
+            <TopEventsTable events={topEvents ?? []} isLoading={eventsLoading} />
+          </div>
         </div>
 
         <div className="mt-8">
           <SportSeasonalityChart />
-        </div>
-
-        <div className="mt-8">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Top Events This Week</h2>
-          <TopEventsTable events={topEvents ?? []} isLoading={eventsLoading} />
         </div>
       </div>
 
