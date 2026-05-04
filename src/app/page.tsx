@@ -72,13 +72,14 @@ export default function DashboardPage() {
           />
         </div>
         <div className="flex items-center gap-4">
-          <TalkTrackDownload weekStart={effectiveWeek} />
-          <DashboardExport weekStart={effectiveWeek} />
           <WeekSelector
             selectedWeek={effectiveWeek}
             currentWeekStart={currentWeekStart}
             onChange={setSelectedWeek}
-          />
+          >
+            <TalkTrackDownload weekStart={effectiveWeek} />
+            <DashboardExport weekStart={effectiveWeek} />
+          </WeekSelector>
           <ThemeToggle />
         </div>
       </div>

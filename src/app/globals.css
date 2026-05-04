@@ -28,3 +28,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.sport-bar-chart .recharts-bar-rectangle {
+  transition: filter 0.15s ease;
+}
+
+.sport-bar-chart .recharts-bar-rectangle:hover {
+  filter: brightness(0.75);
+}

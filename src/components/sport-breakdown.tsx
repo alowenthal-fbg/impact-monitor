@@ -145,11 +145,12 @@ export function SportBreakdownPanel({ sportData, isLoading }: SportBreakdownPane
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData}>
+        <BarChart data={chartData} className="sport-bar-chart">
           <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
           <XAxis dataKey="sportLabel" fontSize={12} tick={{ fill: 'var(--chart-tick)' }} />
           <YAxis tickFormatter={config.formatAxis} fontSize={12} tick={{ fill: 'var(--chart-tick)' }} />
           <Tooltip
+            cursor={false}
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', color: '#111827' }}
             labelStyle={{ color: '#4b5563' }}
             itemStyle={{ color: '#111827' }}
