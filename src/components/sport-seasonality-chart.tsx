@@ -10,9 +10,13 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
 } from 'recharts';
 import { formatWeekLabel } from '@/lib/utils/week';
 import { useSportSeasonality } from '@/hooks/use-sport-seasonality';
+import { TIER_ONE_EVENTS, type TierOneEvent } from '@/lib/constants/tier-one-events';
+import { getWeekStart } from '@/lib/utils/week';
+import { format } from 'date-fns';
 
 const DEFAULT_SPORTS = new Set(['Baseball', 'Football', 'Basketball', 'Hockey', 'Soccer']);
 
@@ -68,6 +72,35 @@ function formatTicketAxis(value: number): string {
   return String(value);
 }
 
+/** Map tier-one events to their nearest Monday week_start for the given year */
+function getEventWeekStarts(year: number, visibleSports: Set<string>): (TierOneEvent & { weekStart: string })[] {
+  return TIER_ONE_EVENTS
+    .filter((e) => visibleSports.has(e.sport))
+    .map((e) => {
+      const monday = getWeekStart(e.getDate(year));
+      return { ...e, weekStart: format(monday, 'yyyy-MM-dd') };
+    });
+}
+
+/** Build a lookup from week_start → list of event labels for that week */
+function buildEventsByWeek(markers: (TierOneEvent & { weekStart: string })[]): Record<string, { label: string; sport: string }[]> {
+  const map: Record<string, { label: string; sport: string }[]> = {};
+  for (const m of markers) {
+    if (!map[m.weekStart]) map[m.weekStart] = [];
+    map[m.weekStart].push({ label: m.label, sport: m.sport });
+  }
+  return map;
+}
+
+/** Stroke-dash style per sport so overlapping lines are distinguishable */
+const EVENT_DASH: Record<string, string> = {
+  Football: '6 3',
+  Baseball: '3 3',
+  Basketball: '8 4 2 4',
+  Hockey: '2 2',
+  Soccer: '10 3',
+};
+
 export function SportSeasonalityChart() {
   const { data: result, isLoading } = useSportSeasonality();
   // Rank sports by total tickets
@@ -81,6 +114,7 @@ export function SportSeasonalityChart() {
   }, [result]);
 
   const [hiddenSports, setHiddenSports] = useState<Set<string>>(new Set());
+  const [showEvents, setShowEvents] = useState(true);
   const initializedRef = useRef(false);
 
   useEffect(() => {
@@ -105,6 +139,17 @@ export function SportSeasonalityChart() {
     });
   };
 
+  const visibleSports = useMemo(() => {
+    return new Set(rankedSports.filter((s) => !hiddenSports.has(s)));
+  }, [rankedSports, hiddenSports]);
+
+  const eventMarkers = useMemo(() => {
+    if (!showEvents) return [];
+    return getEventWeekStarts(new Date().getFullYear(), visibleSports);
+  }, [showEvents, visibleSports]);
+
+  const eventsByWeek = useMemo(() => buildEventsByWeek(eventMarkers), [eventMarkers]);
+
   if (isLoading) {
     return <div className="h-[420px] w-full animate-pulse rounded-lg bg-gray-200" />;
   }
@@ -125,6 +170,17 @@ export function SportSeasonalityChart() {
           <p className="text-sm text-gray-500">Weekly ticket volume by sport (YTD)</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setShowEvents((v) => !v)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              showEvents
+                ? 'border-gray-700 bg-gray-700 text-white'
+                : 'border-gray-300 bg-white text-gray-400'
+            }`}
+          >
+            Events
+          </button>
+          <span className="mx-1 h-4 w-px bg-gray-300" />
           {rankedSports.map((sport, i) => (
             <button
               key={sport}
@@ -158,13 +214,32 @@ export function SportSeasonalityChart() {
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;
+              const weekKey = String(label);
+              const events = eventsByWeek[weekKey];
               const sorted = [...payload].sort(
                 (a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)
               );
               return (
                 <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+                  {events && events.length > 0 && (
+                    <div className="mb-2 space-y-0.5">
+                      {events.map((evt) => (
+                        <div
+                          key={evt.label}
+                          className="flex items-center gap-1.5 text-xs font-semibold"
+                          style={{ color: SPORT_COLORS[evt.sport] || '#666' }}
+                        >
+                          <span
+                            className="inline-block h-2 w-2 rounded-sm"
+                            style={{ backgroundColor: SPORT_COLORS[evt.sport] || '#666' }}
+                          />
+                          {evt.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <p className="mb-2 text-xs font-medium text-gray-600">
-                    {formatWeekLabel(String(label))}
+                    {formatWeekLabel(weekKey)}
                   </p>
                   {sorted.map((entry) => (
                     <div key={entry.name} className="flex items-center gap-2 text-sm">
@@ -194,6 +269,22 @@ export function SportSeasonalityChart() {
                 name={sportWithEmoji(sport)}
               />
             ))}
+          {eventMarkers.map((evt) => (
+            <ReferenceLine
+              key={`${evt.sport}-${evt.abbrev}`}
+              x={evt.weekStart}
+              stroke={SPORT_COLORS[evt.sport] || '#999'}
+              strokeDasharray={EVENT_DASH[evt.sport] || '4 4'}
+              strokeWidth={1.5}
+              label={{
+                value: evt.abbrev,
+                position: 'top',
+                fill: SPORT_COLORS[evt.sport] || '#999',
+                fontSize: 10,
+                fontWeight: 600,
+              }}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>
