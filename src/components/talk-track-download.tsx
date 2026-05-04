@@ -13,7 +13,7 @@ export function TalkTrackDownload({ weekStart }: TalkTrackDownloadProps) {
   const [copied, setCopied] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  // Clear cached talk track when week changes
+  // Clear cached summary when week changes
   const prevWeekRef = useRef(weekStart);
   useEffect(() => {
     if (prevWeekRef.current !== weekStart) {
@@ -42,14 +42,14 @@ export function TalkTrackDownload({ weekStart }: TalkTrackDownloadProps) {
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        throw new Error(result.error?.message || 'Failed to generate talk track');
+        throw new Error(result.error?.message || 'Failed to generate weekly summary');
       }
 
       setTalkTrack(result.data.talkTrack);
       dialogRef.current?.showModal();
     } catch (err) {
       console.error('Talk track generation error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate talk track');
+      setError(err instanceof Error ? err.message : 'Failed to generate weekly summary');
     } finally {
       setIsGenerating(false);
     }
@@ -101,7 +101,7 @@ export function TalkTrackDownload({ weekStart }: TalkTrackDownloadProps) {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Talk Track
+              Weekly Summary
             </>
           )}
         </button>
@@ -118,7 +118,7 @@ export function TalkTrackDownload({ weekStart }: TalkTrackDownloadProps) {
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Talk Track
+              Weekly Summary
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Week of {weekStart}
