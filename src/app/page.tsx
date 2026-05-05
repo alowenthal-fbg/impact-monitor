@@ -13,7 +13,6 @@ import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
 import { TalkTrackDownload } from '@/components/weekly-summary-download';
 import { SubscriberManager } from '@/components/subscriber-manager';
-import { SettingsPanel } from '@/components/settings-panel';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
 import { useTrendData } from '@/hooks/use-trend-data';
 import { useForecastData } from '@/hooks/use-forecast-data';
@@ -23,6 +22,7 @@ import { useWeekPace } from '@/hooks/use-week-pace';
 import { usePipelineStatus } from '@/hooks/use-pipeline-status';
 import { getCurrentWeek } from '@/lib/utils/week';
 import { format, addDays } from 'date-fns';
+import { ReceiptText } from 'lucide-react';
 
 function getCurrentWeekStr(): string {
   return format(getCurrentWeek(), 'yyyy-MM-dd');
@@ -48,35 +48,42 @@ export default function DashboardPage() {
   const { data: paceData, isLoading: paceLoading } = useWeekPace(currentWeekStart);
   const { data: pipelineStatus, isLoading: statusLoading } = usePipelineStatus();
 
+  // Compute vs-forecast deltas for the selected week
+  const weekForecast = forecastData?.find(f => f.week_start === effectiveWeek);
+  const computeForecastDelta = (actual: number, forecast: number | undefined): number | null => {
+    if (forecast == null || forecast === 0) return null;
+    return ((actual - forecast) / forecast) * 100;
+  };
+
+  const ticketsVsForecast = computeForecastDelta(kpiData?.totalTickets ?? 0, weekForecast?.total_tickets);
+  const ordersVsForecast = computeForecastDelta(kpiData?.totalOrders ?? 0, weekForecast?.total_orders);
+  const gtvVsForecast = computeForecastDelta(kpiData?.totalGtv ?? 0, weekForecast?.total_gtv);
+  const avgOrderForecast = weekForecast && weekForecast.total_orders > 0
+    ? weekForecast.total_gtv / weekForecast.total_orders
+    : undefined;
+  const aovVsForecast = computeForecastDelta(kpiData?.avgOrderValue ?? 0, avgOrderForecast);
+
   return (
     <div className="flex min-h-screen flex-col bg-background p-8 text-foreground">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/fanatics-flag-black.svg"
-              alt="Fanatics"
-              width={24}
-              height={20}
-              className="block dark:hidden"
-            />
-            <Image
-              src="/fanatics-flag-white.svg"
-              alt="Fanatics"
-              width={24}
-              height={20}
-              className="hidden dark:block"
-            />
-            <h1 className="text-3xl font-bold">Fanatics Tickets</h1>
-          </div>
-          <PipelineStatus
-            status={pipelineStatus?.status}
-            timestamp={pipelineStatus?.started_at}
-            errorMessage={pipelineStatus?.error_message}
-            isLoading={statusLoading}
+        <div className="flex items-center gap-3">
+          <Image
+            src="/fanatics-flag-black.svg"
+            alt="Fanatics"
+            width={24}
+            height={20}
+            className="block dark:hidden"
           />
+          <Image
+            src="/fanatics-flag-white.svg"
+            alt="Fanatics"
+            width={24}
+            height={20}
+            className="hidden dark:block"
+          />
+          <h1 className="text-3xl font-bold">Fanatics Tickets</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-stretch gap-4">
           <WeekSelector
             selectedWeek={effectiveWeek}
             currentWeekStart={currentWeekStart}
@@ -85,7 +92,12 @@ export default function DashboardPage() {
             <TalkTrackDownload weekStart={effectiveWeek} />
             <DashboardExport weekStart={effectiveWeek} />
           </WeekSelector>
-          <SettingsPanel />
+          <PipelineStatus
+            status={pipelineStatus?.status}
+            timestamp={pipelineStatus?.started_at}
+            errorMessage={pipelineStatus?.error_message}
+            isLoading={statusLoading}
+          />
         </div>
       </div>
 
@@ -96,12 +108,15 @@ export default function DashboardPage() {
       )}
 
       <div id="dashboard-export-target" className="mt-8 rounded-lg bg-white p-6 dark:bg-gray-900">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <KPICard
             title="Total Tickets Sold"
             value={kpiData?.totalTickets ?? 0}
             unit="tickets"
             wowDelta={kpiData?.ticketsWow ?? null}
+            vsForecastDelta={ticketsVsForecast}
+            prevValue={kpiData?.prevTickets}
+            forecastValue={weekForecast?.total_tickets}
             isLoading={kpiLoading}
           />
           <KPICard
@@ -109,6 +124,9 @@ export default function DashboardPage() {
             value={kpiData?.totalOrders ?? 0}
             unit="orders"
             wowDelta={kpiData?.ordersWow ?? null}
+            vsForecastDelta={ordersVsForecast}
+            prevValue={kpiData?.prevOrders}
+            forecastValue={weekForecast?.total_orders}
             isLoading={kpiLoading}
           />
           <KPICard
@@ -116,20 +134,20 @@ export default function DashboardPage() {
             value={kpiData?.totalGtv ?? 0}
             unit="currency"
             wowDelta={kpiData?.gtvWow ?? null}
+            vsForecastDelta={gtvVsForecast}
+            prevValue={kpiData?.prevGtv}
+            forecastValue={weekForecast?.total_gtv}
             isLoading={kpiLoading}
           />
           <KPICard
             title="Avg Order Value"
             value={kpiData?.avgOrderValue ?? 0}
             unit="currency"
+            icon={ReceiptText}
             wowDelta={kpiData?.avgOrderValueWow ?? null}
-            isLoading={kpiLoading}
-          />
-          <KPICard
-            title="Gross Profit"
-            value={kpiData?.totalGrossProfit ?? 0}
-            unit="currency"
-            wowDelta={kpiData?.grossProfitWow ?? null}
+            vsForecastDelta={aovVsForecast}
+            prevValue={kpiData?.prevAvgOrderValue}
+            forecastValue={avgOrderForecast}
             isLoading={kpiLoading}
           />
         </div>

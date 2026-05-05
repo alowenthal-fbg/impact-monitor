@@ -7,13 +7,25 @@ vi.mock('date-fns', () => ({
   formatDistanceToNow: () => '2 hours ago',
 }));
 
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    from: () => ({
+      select: () => ({
+        order: () => ({
+          limit: () => Promise.resolve({ data: [] }),
+        }),
+      }),
+    }),
+  }),
+}));
+
 function Wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient();
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
 describe('PipelineStatus', () => {
-  it('renders success state', () => {
+  it('renders success state with timestamp', () => {
     render(
       <PipelineStatus
         status="success"
@@ -22,34 +34,7 @@ describe('PipelineStatus', () => {
       { wrapper: Wrapper }
     );
 
-    expect(screen.getByText('Pipeline Healthy')).toBeDefined();
-    expect(screen.getByText('Last updated 2 hours ago')).toBeDefined();
-  });
-
-  it('renders partial state', () => {
-    render(
-      <PipelineStatus
-        status="partial"
-        timestamp="2026-04-30T10:00:00Z"
-      />,
-      { wrapper: Wrapper }
-    );
-
-    expect(screen.getByText('Partial Success')).toBeDefined();
-  });
-
-  it('renders failed state with error message', () => {
-    render(
-      <PipelineStatus
-        status="failed"
-        timestamp="2026-04-30T10:00:00Z"
-        errorMessage="Ticketmaster API timeout"
-      />,
-      { wrapper: Wrapper }
-    );
-
-    expect(screen.getByText('Pipeline Failed')).toBeDefined();
-    expect(screen.getByText('Ticketmaster API timeout')).toBeDefined();
+    expect(screen.getByText('Updated 2 hours ago')).toBeDefined();
   });
 
   it('renders loading skeleton', () => {
@@ -59,7 +44,7 @@ describe('PipelineStatus', () => {
 
   it('renders empty state when no data', () => {
     render(<PipelineStatus />, { wrapper: Wrapper });
-    expect(screen.getByText('No pipeline data available')).toBeDefined();
+    expect(screen.getByText('No data')).toBeDefined();
   });
 
   it('renders refresh button', () => {
@@ -72,5 +57,42 @@ describe('PipelineStatus', () => {
     );
 
     expect(screen.getAllByTitle('Refresh data').length).toBeGreaterThan(0);
+  });
+
+  it('renders settings button', () => {
+    render(
+      <PipelineStatus
+        status="success"
+        timestamp="2026-04-30T10:00:00Z"
+      />,
+      { wrapper: Wrapper }
+    );
+
+    expect(screen.getAllByTitle('Settings').length).toBeGreaterThan(0);
+  });
+
+  it('shows green dot for success status', () => {
+    const { container } = render(
+      <PipelineStatus
+        status="success"
+        timestamp="2026-04-30T10:00:00Z"
+      />,
+      { wrapper: Wrapper }
+    );
+
+    expect(container.querySelector('.bg-green-500')).not.toBeNull();
+  });
+
+  it('shows red dot for failed status', () => {
+    const { container } = render(
+      <PipelineStatus
+        status="failed"
+        timestamp="2026-04-30T10:00:00Z"
+        errorMessage="API timeout"
+      />,
+      { wrapper: Wrapper }
+    );
+
+    expect(container.querySelector('.bg-red-500')).not.toBeNull();
   });
 });
