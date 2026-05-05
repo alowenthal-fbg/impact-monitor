@@ -16,6 +16,7 @@ interface KPICardProps {
   vsForecastDelta: number | null;
   prevValue?: number | null;
   forecastValue?: number | null;
+  comparisonLabel?: string;
   icon?: LucideIcon;
   isLoading?: boolean;
 }
@@ -38,7 +39,7 @@ function formatCompact(value: number, unit: string): string {
   return value.toLocaleString('en-US');
 }
 
-export function KPICard({ title, value, unit, wowDelta, vsForecastDelta, prevValue, forecastValue, icon, isLoading }: KPICardProps) {
+export function KPICard({ title, value, unit, wowDelta, vsForecastDelta, prevValue, forecastValue, comparisonLabel, icon, isLoading }: KPICardProps) {
   const Icon = icon ?? unitIcons[unit] ?? TrendingUp;
   if (isLoading) {
     return (
@@ -59,19 +60,21 @@ export function KPICard({ title, value, unit, wowDelta, vsForecastDelta, prevVal
       </p>
 
       {/* Comparison table */}
-      <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+      <div className={`mt-3 grid gap-3 border-t border-gray-100 pt-3 dark:border-gray-700 ${vsForecastDelta !== null || forecastValue != null ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <ComparisonColumn
-          heading="Week over Week"
+          heading={comparisonLabel ?? "Week over Week"}
           delta={wowDelta}
           absoluteValue={prevValue}
           unit={unit}
         />
-        <ComparisonColumn
-          heading="vs. Forecast"
-          delta={vsForecastDelta}
-          absoluteValue={forecastValue}
-          unit={unit}
-        />
+        {(vsForecastDelta !== null || forecastValue != null) && (
+          <ComparisonColumn
+            heading="vs. Forecast"
+            delta={vsForecastDelta}
+            absoluteValue={forecastValue}
+            unit={unit}
+          />
+        )}
       </div>
     </div>
   );

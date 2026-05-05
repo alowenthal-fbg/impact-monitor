@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { KPICard } from '@/components/kpi-card';
-import { WeekSelector } from '@/components/week-selector';
+import { WeekSelector, type ViewMode } from '@/components/week-selector';
 import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
 import { WeekPaceChart } from '@/components/week-pace-chart';
 import { SportBreakdownPanel } from '@/components/sport-breakdown';
@@ -14,6 +14,7 @@ import { DashboardExport } from '@/components/dashboard-export';
 import { TalkTrackDownload } from '@/components/weekly-summary-download';
 import { SubscriberManager } from '@/components/subscriber-manager';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
+import { useYtdData } from '@/hooks/use-ytd-data';
 import { useTrendData } from '@/hooks/use-trend-data';
 import { useForecastData } from '@/hooks/use-forecast-data';
 import { useDailyData } from '@/hooks/use-daily-data';
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const currentWeekStart = getCurrentWeekStr();
   const { data: weeks } = useAvailableWeeks();
   const [selectedWeek, setSelectedWeek] = useState(currentWeekStart);
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
 
   // If current week has no data yet, default to the most recent available week
   const effectiveWeek = weeks?.includes(selectedWeek)
@@ -40,11 +42,22 @@ export default function DashboardPage() {
 
   const weekEnd = format(addDays(new Date(effectiveWeek + 'T00:00:00'), 6), 'yyyy-MM-dd');
 
+  const isYtd = viewMode === 'ytd';
+  const ytdStart = `${new Date().getFullYear()}-01-01`;
+  const ytdEnd = format(new Date(), 'yyyy-MM-dd');
+
   const { data: kpiData, isLoading: kpiLoading, error } = useWeeklyData(effectiveWeek, currentWeekStart);
+  const { data: ytdKpiData, isLoading: ytdKpiLoading, error: ytdError } = useYtdData(isYtd);
   const { data: trendData, isLoading: trendLoading } = useTrendData();
   const { data: forecastData } = useForecastData();
-  const { data: sportData, isLoading: sportLoading } = useDailyData(effectiveWeek, weekEnd);
-  const { data: topEvents, isLoading: eventsLoading } = useTopEvents(effectiveWeek, weekEnd);
+  const { data: sportData, isLoading: sportLoading } = useDailyData(
+    isYtd ? ytdStart : effectiveWeek,
+    isYtd ? ytdEnd : weekEnd
+  );
+  const { data: topEvents, isLoading: eventsLoading } = useTopEvents(
+    isYtd ? ytdStart : effectiveWeek,
+    isYtd ? ytdEnd : weekEnd
+  );
   const { data: paceData, isLoading: paceLoading } = useWeekPace(currentWeekStart);
   const { data: pipelineStatus, isLoading: statusLoading } = usePipelineStatus();
 
@@ -62,6 +75,11 @@ export default function DashboardPage() {
     ? weekForecast.total_gtv / weekForecast.total_orders
     : undefined;
   const aovVsForecast = computeForecastDelta(kpiData?.avgOrderValue ?? 0, avgOrderForecast);
+
+  // Pick the active KPI data based on view mode
+  const activeKpi = isYtd ? ytdKpiData : kpiData;
+  const activeKpiLoading = isYtd ? ytdKpiLoading : kpiLoading;
+  const activeError = isYtd ? ytdError : error;
 
   return (
     <div className="flex min-h-screen flex-col bg-background p-8 text-foreground">
@@ -88,6 +106,8 @@ export default function DashboardPage() {
             selectedWeek={effectiveWeek}
             currentWeekStart={currentWeekStart}
             onChange={setSelectedWeek}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           >
             <TalkTrackDownload weekStart={effectiveWeek} />
             <DashboardExport weekStart={effectiveWeek} />
@@ -101,9 +121,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {error && (
+      {activeError && (
         <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
-          Failed to load data: {error.message}
+          Failed to load data: {activeError.message}
         </div>
       )}
 
@@ -111,48 +131,52 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <KPICard
             title="Total Tickets Sold"
-            value={kpiData?.totalTickets ?? 0}
+            value={activeKpi?.totalTickets ?? 0}
             unit="tickets"
-            wowDelta={kpiData?.ticketsWow ?? null}
-            vsForecastDelta={ticketsVsForecast}
-            prevValue={kpiData?.prevTickets}
-            forecastValue={weekForecast?.total_tickets}
-            isLoading={kpiLoading}
+            wowDelta={activeKpi?.ticketsWow ?? null}
+            vsForecastDelta={isYtd ? null : ticketsVsForecast}
+            prevValue={activeKpi?.prevTickets}
+            forecastValue={isYtd ? undefined : weekForecast?.total_tickets}
+            comparisonLabel={isYtd ? 'vs. Prior Year' : undefined}
+            isLoading={activeKpiLoading}
           />
           <KPICard
             title="Total Orders"
-            value={kpiData?.totalOrders ?? 0}
+            value={activeKpi?.totalOrders ?? 0}
             unit="orders"
-            wowDelta={kpiData?.ordersWow ?? null}
-            vsForecastDelta={ordersVsForecast}
-            prevValue={kpiData?.prevOrders}
-            forecastValue={weekForecast?.total_orders}
-            isLoading={kpiLoading}
+            wowDelta={activeKpi?.ordersWow ?? null}
+            vsForecastDelta={isYtd ? null : ordersVsForecast}
+            prevValue={activeKpi?.prevOrders}
+            forecastValue={isYtd ? undefined : weekForecast?.total_orders}
+            comparisonLabel={isYtd ? 'vs. Prior Year' : undefined}
+            isLoading={activeKpiLoading}
           />
           <KPICard
             title="Total Revenue (GTV)"
-            value={kpiData?.totalGtv ?? 0}
+            value={activeKpi?.totalGtv ?? 0}
             unit="currency"
-            wowDelta={kpiData?.gtvWow ?? null}
-            vsForecastDelta={gtvVsForecast}
-            prevValue={kpiData?.prevGtv}
-            forecastValue={weekForecast?.total_gtv}
-            isLoading={kpiLoading}
+            wowDelta={activeKpi?.gtvWow ?? null}
+            vsForecastDelta={isYtd ? null : gtvVsForecast}
+            prevValue={activeKpi?.prevGtv}
+            forecastValue={isYtd ? undefined : weekForecast?.total_gtv}
+            comparisonLabel={isYtd ? 'vs. Prior Year' : undefined}
+            isLoading={activeKpiLoading}
           />
           <KPICard
             title="Avg Order Value"
-            value={kpiData?.avgOrderValue ?? 0}
+            value={activeKpi?.avgOrderValue ?? 0}
             unit="currency"
             icon={ReceiptText}
-            wowDelta={kpiData?.avgOrderValueWow ?? null}
-            vsForecastDelta={aovVsForecast}
-            prevValue={kpiData?.prevAvgOrderValue}
-            forecastValue={avgOrderForecast}
-            isLoading={kpiLoading}
+            wowDelta={activeKpi?.avgOrderValueWow ?? null}
+            vsForecastDelta={isYtd ? null : aovVsForecast}
+            prevValue={activeKpi?.prevAvgOrderValue}
+            forecastValue={isYtd ? undefined : avgOrderForecast}
+            comparisonLabel={isYtd ? 'vs. Prior Year' : undefined}
+            isLoading={activeKpiLoading}
           />
         </div>
 
-        {effectiveWeek === currentWeekStart && (
+        {!isYtd && effectiveWeek === currentWeekStart && (
           <div className="mt-8">
             <WeekPaceChart data={paceData ?? null} isLoading={paceLoading} />
           </div>
@@ -173,7 +197,7 @@ export default function DashboardPage() {
             isLoading={sportLoading}
           />
           <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Top Events This Week</h2>
+            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{isYtd ? 'Top Events YTD' : 'Top Events This Week'}</h2>
             <TopEventsTable events={topEvents?.events ?? []} weeklyGtv={topEvents?.weeklyGtv ?? 0} isLoading={eventsLoading} />
           </div>
         </div>

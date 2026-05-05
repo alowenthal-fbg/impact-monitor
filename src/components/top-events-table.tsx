@@ -61,7 +61,7 @@ export function TopEventsTable({ events, weeklyGtv, isLoading }: TopEventsTableP
               GTV
             </th>
             <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-              % of Week
+              % of Total
             </th>
           </tr>
         </thead>
