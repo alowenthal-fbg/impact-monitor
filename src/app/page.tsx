@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { KPICard } from '@/components/kpi-card';
 import { WeekSelector } from '@/components/week-selector';
 import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
+import { WeekPaceChart } from '@/components/week-pace-chart';
 import { SportBreakdownPanel } from '@/components/sport-breakdown';
 import { SportSeasonalityChart } from '@/components/sport-seasonality-chart';
 import { TopEventsTable } from '@/components/top-events-table';
@@ -12,11 +13,13 @@ import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
 import { TalkTrackDownload } from '@/components/weekly-summary-download';
 import { SubscriberManager } from '@/components/subscriber-manager';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { SettingsPanel } from '@/components/settings-panel';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
 import { useTrendData } from '@/hooks/use-trend-data';
+import { useForecastData } from '@/hooks/use-forecast-data';
 import { useDailyData } from '@/hooks/use-daily-data';
 import { useTopEvents } from '@/hooks/use-top-events';
+import { useWeekPace } from '@/hooks/use-week-pace';
 import { usePipelineStatus } from '@/hooks/use-pipeline-status';
 import { getCurrentWeek } from '@/lib/utils/week';
 import { format, addDays } from 'date-fns';
@@ -39,8 +42,10 @@ export default function DashboardPage() {
 
   const { data: kpiData, isLoading: kpiLoading, error } = useWeeklyData(effectiveWeek, currentWeekStart);
   const { data: trendData, isLoading: trendLoading } = useTrendData();
+  const { data: forecastData } = useForecastData();
   const { data: sportData, isLoading: sportLoading } = useDailyData(effectiveWeek, weekEnd);
   const { data: topEvents, isLoading: eventsLoading } = useTopEvents(effectiveWeek, weekEnd);
+  const { data: paceData, isLoading: paceLoading } = useWeekPace(currentWeekStart);
   const { data: pipelineStatus, isLoading: statusLoading } = usePipelineStatus();
 
   return (
@@ -66,7 +71,7 @@ export default function DashboardPage() {
           </div>
           <PipelineStatus
             status={pipelineStatus?.status}
-            timestamp={pipelineStatus?.created_at}
+            timestamp={pipelineStatus?.started_at}
             errorMessage={pipelineStatus?.error_message}
             isLoading={statusLoading}
           />
@@ -80,7 +85,7 @@ export default function DashboardPage() {
             <TalkTrackDownload weekStart={effectiveWeek} />
             <DashboardExport weekStart={effectiveWeek} />
           </WeekSelector>
-          <ThemeToggle />
+          <SettingsPanel />
         </div>
       </div>
 
@@ -129,9 +134,16 @@ export default function DashboardPage() {
           />
         </div>
 
+        {effectiveWeek === currentWeekStart && (
+          <div className="mt-8">
+            <WeekPaceChart data={paceData ?? null} isLoading={paceLoading} />
+          </div>
+        )}
+
         <div className="mt-8">
           <WeeklyTrendChart
             trendData={trendData ?? []}
+            forecastData={forecastData}
             selectedWeek={effectiveWeek}
             isLoading={trendLoading}
           />

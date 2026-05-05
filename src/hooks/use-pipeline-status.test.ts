@@ -4,10 +4,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import { usePipelineStatus } from './use-pipeline-status';
 
-const mockSelect = vi.fn();
-const mockFrom = vi.fn(() => ({
-  select: mockSelect,
-}));
+function buildChain(resolvedValue: { data: unknown; error: unknown }) {
+  const chain = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue(resolvedValue),
+  };
+  return chain;
+}
+
+let mockChain: ReturnType<typeof buildChain>;
+const mockFrom = vi.fn(() => mockChain);
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ from: mockFrom }),
@@ -29,17 +39,11 @@ describe('usePipelineStatus', () => {
   it('returns the most recent pipeline run', async () => {
     const mockData = {
       status: 'success',
-      created_at: '2026-04-30T10:00:00Z',
+      started_at: '2026-04-30T10:00:00Z',
       error_message: null,
     };
 
-    mockSelect.mockReturnValue({
-      order: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: mockData, error: null }),
-        }),
-      }),
-    });
+    mockChain = buildChain({ data: mockData, error: null });
 
     const { result } = renderHook(() => usePipelineStatus(), {
       wrapper: createWrapper(),
@@ -52,17 +56,11 @@ describe('usePipelineStatus', () => {
   it('returns failed status with error message', async () => {
     const mockData = {
       status: 'failed',
-      created_at: '2026-04-30T08:00:00Z',
+      started_at: '2026-04-30T08:00:00Z',
       error_message: 'Ticketmaster API timeout',
     };
 
-    mockSelect.mockReturnValue({
-      order: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: mockData, error: null }),
-        }),
-      }),
-    });
+    mockChain = buildChain({ data: mockData, error: null });
 
     const { result } = renderHook(() => usePipelineStatus(), {
       wrapper: createWrapper(),
@@ -74,13 +72,7 @@ describe('usePipelineStatus', () => {
   });
 
   it('throws on supabase error', async () => {
-    mockSelect.mockReturnValue({
-      order: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Connection failed' } }),
-        }),
-      }),
-    });
+    mockChain = buildChain({ data: null, error: { message: 'Connection failed' } });
 
     const { result } = renderHook(() => usePipelineStatus(), {
       wrapper: createWrapper(),

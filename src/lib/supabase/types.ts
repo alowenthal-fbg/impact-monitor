@@ -8,8 +8,19 @@ export interface DailyMetric {
   gross_profit: number | null;
   sport: string | null;
   event_name: string | null;
-  source: 'tm_api' | 'snowflake' | 'reconciled';
+  source: 'tm_api';
   created_at: string;
+}
+
+export interface ForecastMetric {
+  id: string;
+  metric_date: string;
+  tickets_sold: number | null;
+  orders: number | null;
+  gtv: number | null;
+  source: 'gsheet_forecast';
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PipelineRun {

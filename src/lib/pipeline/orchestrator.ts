@@ -1,6 +1,5 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { pullTicketmasterData } from '@/lib/pipeline/ticketmaster';
-import { fetchSnowflakeData } from '@/lib/pipeline/snowflake';
 import { sendMondayEmail } from '@/lib/email/send';
 import { isMonday } from '@/lib/utils/week';
 import { format, startOfYear } from 'date-fns';
@@ -13,10 +12,9 @@ export interface StageResult {
 }
 
 export interface PipelineResult {
-  overallStatus: 'success' | 'partial' | 'failed';
+  overallStatus: 'success' | 'failed';
   stages: {
     tmPull: StageResult;
-    snowflakePull: StageResult;
   };
   runId: string;
   startedAt: string;
@@ -61,7 +59,7 @@ export async function runFullPipeline(): Promise<PipelineResult> {
     throw new Error(`Failed to initialize pipeline run: ${runError?.message}`);
   }
 
-  // Stage 1: Ticketmaster pull
+  // Stage 1: Ticketmaster (Impact) pull
   const tmPull = await runStage('tm_pull', () =>
     pullTicketmasterData(startDate, endDate)
   );
@@ -75,25 +73,8 @@ export async function runFullPipeline(): Promise<PipelineResult> {
     completed_at: new Date().toISOString(),
   });
 
-  // Stage 2: Snowflake pull
-  const snowflakePull = await runStage('snowflake_pull', () =>
-    fetchSnowflakeData({ startDate, endDate })
-  );
-
-  // Log Snowflake stage
-  await supabase.from('pipeline_runs').insert({
-    started_at: startedAt,
-    stage: 'snowflake_pull',
-    status: snowflakePull.success ? 'success' : 'failed',
-    error_message: snowflakePull.error || null,
-    completed_at: new Date().toISOString(),
-  });
-
   // Determine overall status
-  const stages = { tmPull, snowflakePull };
-  const allSuccess = Object.values(stages).every((s) => s.success);
-  const allFailed = Object.values(stages).every((s) => !s.success);
-  const overallStatus = allSuccess ? 'success' : allFailed ? 'failed' : 'partial';
+  const overallStatus = tmPull.success ? 'success' : 'failed';
 
   const completedAt = new Date().toISOString();
 
@@ -164,7 +145,7 @@ export async function runFullPipeline(): Promise<PipelineResult> {
 
   return {
     overallStatus,
-    stages,
+    stages: { tmPull },
     runId: run.id,
     startedAt,
     completedAt,

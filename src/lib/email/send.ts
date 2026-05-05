@@ -38,14 +38,14 @@ export async function sendMondayEmail(
   const { data: sportRows } = await supabase
     .from('daily_metrics')
     .select('sport, tickets_sold, gtv')
-    .eq('source', 'reconciled')
+    .eq('source', 'tm_api')
     .gte('metric_date', weekData.weekStart)
     .lte('metric_date', weekEndStr);
 
   const { data: topEventsData } = await supabase
     .from('daily_metrics')
     .select('sport, event_name, gtv')
-    .eq('source', 'reconciled')
+    .eq('source', 'tm_api')
     .gte('metric_date', weekData.weekStart)
     .lte('metric_date', weekEndStr)
     .order('gtv', { ascending: false })

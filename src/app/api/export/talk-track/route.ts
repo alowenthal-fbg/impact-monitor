@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const { data: sportRaw } = await supabase
       .from('daily_metrics')
       .select('sport, tickets_sold, gtv')
-      .eq('source', 'reconciled')
+      .eq('source', 'tm_api')
       .gte('metric_date', weekStart)
       .lte('metric_date', weekEndStr)
       .not('sport', 'is', null);
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const { data: eventsRaw } = await supabase
       .from('daily_metrics')
       .select('sport, event_name, gtv')
-      .eq('source', 'reconciled')
+      .eq('source', 'tm_api')
       .gte('metric_date', weekStart)
       .lte('metric_date', weekEndStr)
       .not('event_name', 'is', null);

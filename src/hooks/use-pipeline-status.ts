@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 
 export interface PipelineRun {
   status: 'success' | 'partial' | 'failed';
-  created_at: string;
+  started_at: string;
   error_message: string | null;
 }
 
@@ -16,8 +16,10 @@ export function usePipelineStatus() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('pipeline_runs')
-        .select('status, created_at, error_message')
-        .order('created_at', { ascending: false })
+        .select('status, started_at, error_message')
+        .eq('stage', 'full_pipeline')
+        .neq('status', 'running')
+        .order('started_at', { ascending: false })
         .limit(1)
         .single();
 

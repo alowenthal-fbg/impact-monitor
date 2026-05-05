@@ -10,18 +10,34 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ReferenceLine,
 } from 'recharts';
 import { formatWeekLabel } from '@/lib/utils/week';
-import { format } from 'date-fns';
+import { format, subWeeks, subMonths, subYears } from 'date-fns';
 import type { TrendDataPoint } from '@/hooks/use-trend-data';
 import { aggregateMonthly } from '@/hooks/use-trend-data';
+import type { ForecastWeekPoint } from '@/hooks/use-forecast-data';
+import { aggregateForecastMonthly } from '@/hooks/use-forecast-data';
 
 type ViewMode = 'weekly' | 'monthly';
+type TimeRange = '1W' | '1M' | '3M' | '6M' | '1Y';
+
+const TIME_RANGES: TimeRange[] = ['1W', '1M', '3M', '6M', '1Y'];
+
+function getTimeRangeCutoff(range: TimeRange): Date {
+  const now = new Date();
+  switch (range) {
+    case '1W': return subWeeks(now, 1);
+    case '1M': return subMonths(now, 1);
+    case '3M': return subMonths(now, 3);
+    case '6M': return subMonths(now, 6);
+    case '1Y': return subYears(now, 1);
+  }
+}
 
 interface WeeklyTrendChartProps {
   trendData: TrendDataPoint[];
+  forecastData?: ForecastWeekPoint[];
   selectedWeek: string;
   isLoading?: boolean;
 }
@@ -49,13 +65,82 @@ const METRICS = [
 
 type MetricKey = (typeof METRICS)[number]['key'];
 
-export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyTrendChartProps) {
+export function WeeklyTrendChart({ trendData, forecastData, selectedWeek, isLoading }: WeeklyTrendChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
+  const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
   const [visibleMetrics, setVisibleMetrics] = useState<Set<MetricKey>>(
     new Set(['total_tickets', 'total_orders', 'total_gtv'])
   );
 
-  const monthlyData = useMemo(() => aggregateMonthly(trendData), [trendData]);
+  const filteredData = useMemo(() => {
+    const cutoff = getTimeRangeCutoff(timeRange).toISOString().split('T')[0];
+    return trendData.filter((d) => d.week_start >= cutoff);
+  }, [trendData, timeRange]);
+
+  const monthlyData = useMemo(() => aggregateMonthly(filteredData), [filteredData]);
+
+  // Filter and aggregate forecast data to match time range
+  const filteredForecast = useMemo(() => {
+    if (!forecastData?.length) return [];
+    const cutoff = getTimeRangeCutoff(timeRange).toISOString().split('T')[0];
+    return forecastData.filter((d) => d.week_start >= cutoff);
+  }, [forecastData, timeRange]);
+
+  const monthlyForecast = useMemo(
+    () => aggregateForecastMonthly(filteredForecast),
+    [filteredForecast]
+  );
+
+  const hasForecast = filteredForecast.length > 0;
+
+  const isWeekly = viewMode === 'weekly';
+  const xKey = isWeekly ? 'week_start' : 'month';
+
+  // Merge forecast into chart data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chartData: any[] = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseData: any[] = isWeekly ? filteredData : monthlyData;
+    if (!hasForecast) return baseData;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const forecastSource: any[] = isWeekly ? filteredForecast : monthlyForecast;
+    const fcKey = isWeekly ? 'week_start' : 'month';
+    const forecastMap = new Map(
+      forecastSource.map((f) => [f[fcKey], f])
+    );
+
+    // Merge forecast values into existing data points
+    const merged = baseData.map((point) => {
+      const fc = forecastMap.get(point[xKey]);
+      return {
+        ...point,
+        forecast_tickets: fc?.total_tickets ?? null,
+        forecast_orders: fc?.total_orders ?? null,
+        forecast_gtv: fc?.total_gtv ?? null,
+      };
+    });
+
+    // Add forecast-only future points not in actuals
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingKeys = new Set(baseData.map((d: any) => d[xKey]));
+    for (const fc of forecastSource) {
+      const key = fc[fcKey];
+      if (!existingKeys.has(key)) {
+        merged.push({
+          [xKey]: key,
+          forecast_tickets: fc.total_tickets,
+          forecast_orders: fc.total_orders,
+          forecast_gtv: fc.total_gtv,
+        });
+      }
+    }
+
+    // Sort by the x-axis key
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    merged.sort((a: any, b: any) => String(a[xKey] ?? '').localeCompare(String(b[xKey] ?? '')));
+    return merged;
+  }, [isWeekly, filteredData, monthlyData, hasForecast, filteredForecast, monthlyForecast, xKey]);
 
   const toggleMetric = (key: MetricKey) => {
     setVisibleMetrics((prev) => {
@@ -83,11 +168,6 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
     );
   }
 
-  const isWeekly = viewMode === 'weekly';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chartData: any[] = isWeekly ? trendData : monthlyData;
-  const xKey = isWeekly ? 'week_start' : 'month';
-
   const hasLeftAxis = visibleMetrics.has('total_tickets') || visibleMetrics.has('total_orders');
   const hasRightAxis = visibleMetrics.has('total_gtv');
 
@@ -98,23 +178,20 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
           {isWeekly ? 'Weekly' : 'Monthly'} Trends
         </h2>
 
-        <div className="flex items-center gap-4">
-          {/* Metric toggles */}
-          <div className="flex items-center gap-2">
-            {METRICS.map(({ key, label, color }) => (
+        <div className="flex items-center gap-3">
+          {/* Time range selector */}
+          <div className="flex rounded-lg border border-gray-300 bg-gray-100 p-0.5 dark:border-gray-600 dark:bg-gray-700">
+            {TIME_RANGES.map((range) => (
               <button
-                key={key}
-                onClick={() => toggleMetric(key)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                  visibleMetrics.has(key)
-                    ? 'border-transparent text-white'
-                    : 'border-gray-300 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500'
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  timeRange === range
+                    ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100'
+                    : 'text-gray-500 dark:text-gray-400'
                 }`}
-                style={
-                  visibleMetrics.has(key) ? { backgroundColor: color } : undefined
-                }
               >
-                {label}
+                {range}
               </button>
             ))}
           </div>
@@ -196,21 +273,6 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
               );
             }}
           />
-          <Legend
-            content={() => (
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-                {METRICS.filter((m) => visibleMetrics.has(m.key)).map(({ key, label, color }) => (
-                  <span
-                    key={key}
-                    className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-900 dark:bg-gray-700 dark:text-gray-100"
-                    style={{ borderBottom: `3px solid ${color}` }}
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-            )}
-          />
           {visibleMetrics.has('total_tickets') && (
             <Area
               yAxisId="left"
@@ -244,6 +306,46 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
               dot={false}
             />
           )}
+          {/* Forecast lines */}
+          {hasForecast && visibleMetrics.has('total_tickets') && (
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="forecast_tickets"
+              stroke="#8884d8"
+              strokeWidth={1.5}
+              strokeDasharray="5 5"
+              dot={false}
+              name="Tickets (Forecast)"
+              connectNulls={false}
+            />
+          )}
+          {hasForecast && visibleMetrics.has('total_orders') && (
+            <Line
+              yAxisId={hasLeftAxis ? 'left' : 'right'}
+              type="monotone"
+              dataKey="forecast_orders"
+              stroke="#ff7300"
+              strokeWidth={1.5}
+              strokeDasharray="5 5"
+              dot={false}
+              name="Orders (Forecast)"
+              connectNulls={false}
+            />
+          )}
+          {hasForecast && visibleMetrics.has('total_gtv') && (
+            <Line
+              yAxisId={hasRightAxis ? 'right' : 'left'}
+              type="monotone"
+              dataKey="forecast_gtv"
+              stroke="#82ca9d"
+              strokeWidth={1.5}
+              strokeDasharray="5 5"
+              dot={false}
+              name="GTV (Forecast)"
+              connectNulls={false}
+            />
+          )}
           {isWeekly && selectedWeek && (
             <ReferenceLine
               x={selectedWeek}
@@ -255,6 +357,26 @@ export function WeeklyTrendChart({ trendData, selectedWeek, isLoading }: WeeklyT
           )}
         </ComposedChart>
       </ResponsiveContainer>
+
+      {/* Metric toggles */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        {METRICS.map(({ key, label, color }) => (
+          <button
+            key={key}
+            onClick={() => toggleMetric(key)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              visibleMetrics.has(key)
+                ? 'border-transparent text-white'
+                : 'border-gray-300 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500'
+            }`}
+            style={
+              visibleMetrics.has(key) ? { backgroundColor: color } : undefined
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
