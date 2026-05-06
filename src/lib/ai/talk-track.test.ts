@@ -8,7 +8,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
   },
 }));
 
-import { generateTalkTrack, type SportBreakdown, type TopEvent } from './talk-track';
+import { generateTalkTrack, type SportBreakdown, type TopEvent, type LiveWeekContext } from './talk-track';
 import type { WeekData } from './narrative';
 
 describe('generateTalkTrack', () => {
@@ -102,5 +102,129 @@ describe('generateTalkTrack', () => {
 
     const prompt = mockCreate.mock.calls[0][0].messages[0].content;
     expect(prompt).toContain('No prior week data available');
+  });
+
+  describe('live-week branch', () => {
+    const liveContext: LiveWeekContext = {
+      daysWithData: 3,
+      daysRemaining: 4,
+      actualsThroughToday: { tickets: 600, orders: 300, gtv: 30000 },
+      paceProjection: {
+        tickets: 1800,
+        orders: 900,
+        gtv: 85000,
+        paceRatio: 1.15,
+      },
+      commercialForecast: {
+        tickets: 1700,
+        orders: 850,
+        gtv: 80000,
+        hasForecast: true,
+      },
+      dayOfWeekStats: [
+        { dayLabel: 'Mon', dayIndex: 0, actualTickets: 200, actualGtv: 10000, baselineTickets: 180, baselineGtv: 9000, hasActualData: true },
+        { dayLabel: 'Tue', dayIndex: 1, actualTickets: 220, actualGtv: 11000, baselineTickets: 190, baselineGtv: 9500, hasActualData: true },
+        { dayLabel: 'Wed', dayIndex: 2, actualTickets: 180, actualGtv: 9000, baselineTickets: 170, baselineGtv: 8500, hasActualData: true },
+        { dayLabel: 'Thu', dayIndex: 3, actualTickets: null, actualGtv: null, baselineTickets: 200, baselineGtv: 10000, hasActualData: false },
+        { dayLabel: 'Fri', dayIndex: 4, actualTickets: null, actualGtv: null, baselineTickets: 280, baselineGtv: 14000, hasActualData: false },
+        { dayLabel: 'Sat', dayIndex: 5, actualTickets: null, actualGtv: null, baselineTickets: 350, baselineGtv: 18000, hasActualData: false },
+        { dayLabel: 'Sun', dayIndex: 6, actualTickets: null, actualGtv: null, baselineTickets: 300, baselineGtv: 15000, hasActualData: false },
+      ],
+      bestBaselineDay: { dayLabel: 'Sat', gtv: 18000 },
+      worstBaselineDay: { dayLabel: 'Wed', gtv: 8500 },
+    };
+
+    it('uses the mid-week prompt when liveContext is passed', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Mid-week update.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents, liveContext);
+
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toContain('mid-week');
+      expect(prompt).toContain('3 of 7');
+      expect(prompt).toContain('still in progress');
+    });
+
+    it('includes pace projection and forecast comparison', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Mid-week update.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents, liveContext);
+
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      // Pace is 15% ahead of baseline
+      expect(prompt).toMatch(/15(\.0)?% ahead of/);
+      // Projected GTV $85K
+      expect(prompt).toContain('$85.0K');
+      // Forecast reference
+      expect(prompt).toContain('$80.0K');
+    });
+
+    it('identifies best and worst baseline days of the week', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Mid-week update.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents, liveContext);
+
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toContain('Sat is the strongest day');
+      expect(prompt).toContain('Wed is the weakest');
+    });
+
+    it('marks days without data as not yet reported', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Mid-week update.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents, liveContext);
+
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toContain('Thu: not yet reported');
+      expect(prompt).toContain('Sat: not yet reported');
+    });
+
+    it('handles missing commercial forecast', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Mid-week update.' }],
+      });
+
+      const noForecastCtx: LiveWeekContext = {
+        ...liveContext,
+        commercialForecast: { tickets: 0, orders: 0, gtv: 0, hasForecast: false },
+      };
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents, noForecastCtx);
+
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toContain('No commercial forecast available');
+    });
+
+    it('uses max_tokens 2000 for live-week prompts', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Mid-week update.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents, liveContext);
+
+      expect(mockCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ max_tokens: 2000 })
+      );
+    });
+
+    it('defaults to completed-week prompt when liveContext is null', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Completed.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents, null);
+
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toContain('Weekly Business Review (WBR)');
+      expect(prompt).not.toContain('mid-week');
+    });
   });
 });

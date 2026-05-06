@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 
 interface TalkTrackDownloadProps {
   weekStart: string;
+  isLiveWeek?: boolean;
 }
 
-export function TalkTrackDownload({ weekStart }: TalkTrackDownloadProps) {
+export function TalkTrackDownload({ weekStart, isLiveWeek = false }: TalkTrackDownloadProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [talkTrack, setTalkTrack] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +102,7 @@ export function TalkTrackDownload({ weekStart }: TalkTrackDownloadProps) {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Weekly Summary
+              {isLiveWeek ? 'Mid-Week Update' : 'Weekly Summary'}
             </>
           )}
         </button>
@@ -118,10 +119,10 @@ export function TalkTrackDownload({ weekStart }: TalkTrackDownloadProps) {
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Weekly Summary
+              {isLiveWeek ? 'Mid-Week Update' : 'Weekly Summary'}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Week of {weekStart}
+              Week of {weekStart}{isLiveWeek ? ' (in progress)' : ''}
             </p>
           </div>
           <div className="flex items-center gap-2">

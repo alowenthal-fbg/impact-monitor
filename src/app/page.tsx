@@ -29,11 +29,14 @@ function getCurrentWeekStr(): string {
   return format(getCurrentWeek(), 'yyyy-MM-dd');
 }
 
+type DashboardTab = 'commercial' | 'engagement';
+
 export default function DashboardPage() {
   const currentWeekStart = getCurrentWeekStr();
   const { data: weeks } = useAvailableWeeks();
   const [selectedWeek, setSelectedWeek] = useState(currentWeekStart);
   const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [activeTab, setActiveTab] = useState<DashboardTab>('commercial');
 
   // If current week has no data yet, default to the most recent available week
   const effectiveWeek = weeks?.includes(selectedWeek)
@@ -109,7 +112,7 @@ export default function DashboardPage() {
             viewMode={viewMode}
             onViewModeChange={setViewMode}
           >
-            <TalkTrackDownload weekStart={effectiveWeek} />
+            <TalkTrackDownload weekStart={effectiveWeek} isLiveWeek={effectiveWeek === currentWeekStart} />
             <DashboardExport weekStart={effectiveWeek} />
           </WeekSelector>
           <PipelineStatus
@@ -127,6 +130,32 @@ export default function DashboardPage() {
         </div>
       )}
 
+      <div className="mt-8 flex items-center gap-8 border-b border-gray-200 dark:border-gray-700">
+        <button
+          type="button"
+          onClick={() => setActiveTab('commercial')}
+          className={`-mb-px border-b-2 px-1 pb-3 text-3xl font-bold transition-colors ${
+            activeTab === 'commercial'
+              ? 'border-foreground text-foreground'
+              : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+          }`}
+        >
+          Commercial
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('engagement')}
+          className={`-mb-px border-b-2 px-1 pb-3 text-3xl font-bold transition-colors ${
+            activeTab === 'engagement'
+              ? 'border-foreground text-foreground'
+              : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+          }`}
+        >
+          Engagement
+        </button>
+      </div>
+
+      {activeTab === 'commercial' ? (
       <div id="dashboard-export-target" className="mt-8 rounded-lg bg-white p-6 dark:bg-gray-900">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <KPICard
@@ -206,6 +235,9 @@ export default function DashboardPage() {
           <SportSeasonalityChart />
         </div>
       </div>
+      ) : (
+        <div className="mt-8 rounded-lg bg-white p-6 dark:bg-gray-900" />
+      )}
 
       <div className="mt-12">
         <h2 className="mb-6 text-2xl font-bold text-foreground">Admin Settings</h2>

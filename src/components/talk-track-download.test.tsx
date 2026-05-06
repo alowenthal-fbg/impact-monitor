@@ -20,16 +20,35 @@ describe('TalkTrackDownload', () => {
     global.fetch = vi.fn();
   });
 
-  it('renders talk track button', () => {
+  it('renders weekly summary button', () => {
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    expect(screen.getByRole('button', { name: /talk track/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /weekly summary/i })).toBeDefined();
+  });
+
+  it('renders mid-week update button when isLiveWeek is true', () => {
+    render(<TalkTrackDownload weekStart="2026-04-21" isLiveWeek />);
+    expect(screen.getByRole('button', { name: /mid-week update/i })).toBeDefined();
+  });
+
+  it('shows "in progress" suffix in modal header when live', async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: { talkTrack: 'Mid-week text.' }, error: null }),
+    });
+
+    render(<TalkTrackDownload weekStart="2026-04-21" isLiveWeek />);
+    fireEvent.click(screen.getByRole('button', { name: /mid-week update/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Week of 2026-04-21 \(in progress\)/)).toBeDefined();
+    });
   });
 
   it('shows loading state during generation', async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}));
 
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Generating...')).toBeDefined();
@@ -43,7 +62,7 @@ describe('TalkTrackDownload', () => {
     });
 
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/export/talk-track', {
@@ -61,7 +80,7 @@ describe('TalkTrackDownload', () => {
     });
 
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     await waitFor(() => {
       expect(screen.getByText('This was a strong week.')).toBeDefined();
@@ -76,7 +95,7 @@ describe('TalkTrackDownload', () => {
     });
 
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Week of 2026-04-21')).toBeDefined();
@@ -93,7 +112,7 @@ describe('TalkTrackDownload', () => {
     });
 
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Copy this text.')).toBeDefined();
@@ -114,7 +133,7 @@ describe('TalkTrackDownload', () => {
     });
 
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Cached content.')).toBeDefined();
@@ -123,7 +142,7 @@ describe('TalkTrackDownload', () => {
     // Close and reopen
     fireEvent.click(screen.getByLabelText('Close'));
     (global.fetch as ReturnType<typeof vi.fn>).mockClear();
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     expect(global.fetch).not.toHaveBeenCalled();
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledTimes(2);
@@ -137,7 +156,7 @@ describe('TalkTrackDownload', () => {
     });
 
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     await waitFor(() => {
       expect(screen.getByText('API key missing')).toBeDefined();
@@ -151,10 +170,10 @@ describe('TalkTrackDownload', () => {
     });
 
     render(<TalkTrackDownload weekStart="2026-04-21" />);
-    fireEvent.click(screen.getByRole('button', { name: /talk track/i }));
+    fireEvent.click(screen.getByRole('button', { name: /weekly summary/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Talk Track')).toBeDefined();
+      expect(screen.getByText('Weekly Summary')).toBeDefined();
     });
   });
 });
