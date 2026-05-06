@@ -13,7 +13,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { formatWeekLabel } from '@/lib/utils/week';
-import { format, subWeeks, subMonths, subYears } from 'date-fns';
+import { format, subWeeks, subMonths, subYears, endOfYear } from 'date-fns';
 import type { TrendDataPoint } from '@/hooks/use-trend-data';
 import { aggregateMonthly } from '@/hooks/use-trend-data';
 import type { ForecastWeekPoint } from '@/hooks/use-forecast-data';
@@ -21,6 +21,7 @@ import { aggregateForecastMonthly } from '@/hooks/use-forecast-data';
 
 type ViewMode = 'weekly' | 'monthly';
 type TimeRange = '1W' | '1M' | '3M' | '6M' | '1Y';
+type Horizon = 'now' | 'year';
 
 const TIME_RANGES: TimeRange[] = ['1W', '1M', '3M', '6M', '1Y'];
 
@@ -68,9 +69,14 @@ type MetricKey = (typeof METRICS)[number]['key'];
 export function WeeklyTrendChart({ trendData, forecastData, selectedWeek, isLoading }: WeeklyTrendChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
   const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
+  const [showForecast, setShowForecast] = useState(true);
+  const [horizon, setHorizon] = useState<Horizon>('now');
   const [visibleMetrics, setVisibleMetrics] = useState<Set<MetricKey>>(
     new Set(['total_tickets', 'total_orders', 'total_gtv'])
   );
+
+  // If forecast is toggled off, collapse horizon back to "now"
+  const effectiveHorizon: Horizon = showForecast ? horizon : 'now';
 
   const filteredData = useMemo(() => {
     const cutoff = getTimeRangeCutoff(timeRange).toISOString().split('T')[0];
@@ -79,12 +85,17 @@ export function WeeklyTrendChart({ trendData, forecastData, selectedWeek, isLoad
 
   const monthlyData = useMemo(() => aggregateMonthly(filteredData), [filteredData]);
 
-  // Filter and aggregate forecast data to match time range
+  // Filter and aggregate forecast data to match time range and horizon.
+  // Horizon "now" caps forecast at today so only actuals show for past weeks;
+  // "year" extends through end of current calendar year.
   const filteredForecast = useMemo(() => {
-    if (!forecastData?.length) return [];
+    if (!showForecast || !forecastData?.length) return [];
     const cutoff = getTimeRangeCutoff(timeRange).toISOString().split('T')[0];
-    return forecastData.filter((d) => d.week_start >= cutoff);
-  }, [forecastData, timeRange]);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yearEndStr = endOfYear(new Date()).toISOString().split('T')[0];
+    const upper = effectiveHorizon === 'now' ? todayStr : yearEndStr;
+    return forecastData.filter((d) => d.week_start >= cutoff && d.week_start <= upper);
+  }, [forecastData, timeRange, showForecast, effectiveHorizon]);
 
   const monthlyForecast = useMemo(
     () => aggregateForecastMonthly(filteredForecast),
@@ -213,6 +224,48 @@ export function WeeklyTrendChart({ trendData, forecastData, selectedWeek, isLoad
               }`}
             >
               Monthly
+            </button>
+          </div>
+
+          {/* Forecast on/off */}
+          <button
+            onClick={() => setShowForecast((v) => !v)}
+            className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors ${
+              showForecast
+                ? 'border-transparent bg-blue-600 text-white'
+                : 'border-gray-300 bg-white text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400'
+            }`}
+          >
+            Forecast
+          </button>
+
+          {/* Horizon: Now / Full Year (only meaningful when forecast is on) */}
+          <div
+            className={`flex rounded-lg border border-gray-300 bg-gray-100 p-0.5 dark:border-gray-600 dark:bg-gray-700 ${
+              showForecast ? '' : 'pointer-events-none opacity-50'
+            }`}
+          >
+            <button
+              onClick={() => setHorizon('now')}
+              disabled={!showForecast}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                effectiveHorizon === 'now'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              Now
+            </button>
+            <button
+              onClick={() => setHorizon('year')}
+              disabled={!showForecast}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                effectiveHorizon === 'year'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              Full Year
             </button>
           </div>
         </div>
