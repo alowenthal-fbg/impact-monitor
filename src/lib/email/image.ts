@@ -14,6 +14,10 @@ export interface EmailImageData {
   wowOrders: number | null;
   wowGtv: number | null;
   wowAov: number | null;
+  vsForecastTickets: number | null;
+  vsForecastOrders: number | null;
+  vsForecastGtv: number | null;
+  vsForecastAov: number | null;
   sportData: Array<{ sport: string; tickets: number; gtv: number }>;
   topEvents: Array<{ sport: string; eventName: string; gtv: number }>;
 }
@@ -23,9 +27,43 @@ function fmtWow(wow: number | null): string {
   return `${wow > 0 ? '+' : ''}${wow.toFixed(1)}% WoW`;
 }
 
-function kpiCard(label: string, value: string, wow: number | null) {
+function fmtForecast(vs: number | null): string {
+  if (vs === null) return '';
+  return `${vs > 0 ? '+' : ''}${vs.toFixed(1)}% vs Forecast`;
+}
+
+function kpiCard(label: string, value: string, wow: number | null, vsForecast: number | null) {
   const wowText = fmtWow(wow);
   const wowColor = wow !== null && wow > 0 ? '#10b981' : '#ef4444';
+  const forecastText = fmtForecast(vsForecast);
+  const forecastColor = vsForecast !== null && vsForecast > 0 ? '#10b981' : '#ef4444';
+
+  const children: React.ReactNode[] = [
+    React.createElement(
+      'div',
+      { key: 'label', style: { fontSize: '13px', color: '#6b7280', marginBottom: '8px' } },
+      label
+    ),
+    React.createElement(
+      'div',
+      { key: 'value', style: { fontSize: '26px', fontWeight: 'bold', marginBottom: '4px' } },
+      value
+    ),
+  ];
+  if (wowText) {
+    children.push(
+      React.createElement('div', { key: 'wow', style: { fontSize: '13px', color: wowColor } }, wowText)
+    );
+  }
+  if (forecastText) {
+    children.push(
+      React.createElement(
+        'div',
+        { key: 'fc', style: { fontSize: '13px', color: forecastColor, marginTop: '2px' } },
+        forecastText
+      )
+    );
+  }
 
   return React.createElement(
     'div',
@@ -39,23 +77,7 @@ function kpiCard(label: string, value: string, wow: number | null) {
         flexDirection: 'column' as const,
       },
     },
-    React.createElement(
-      'div',
-      { style: { fontSize: '13px', color: '#6b7280', marginBottom: '8px' } },
-      label
-    ),
-    React.createElement(
-      'div',
-      { style: { fontSize: '26px', fontWeight: 'bold', marginBottom: '4px' } },
-      value
-    ),
-    wowText
-      ? React.createElement(
-          'div',
-          { style: { fontSize: '13px', color: wowColor } },
-          wowText
-        )
-      : null
+    ...children
   );
 }
 
@@ -90,10 +112,10 @@ export async function generateEmailImage(data: EmailImageData): Promise<Buffer> 
     React.createElement(
       'div',
       { style: { display: 'flex', gap: '16px', marginBottom: '28px' } },
-      kpiCard('Tickets Sold', data.totalTickets.toLocaleString(), data.wowTickets),
-      kpiCard('Orders', data.totalOrders.toLocaleString(), data.wowOrders),
-      kpiCard('GTV', `$${(data.totalGtv / 1000).toFixed(1)}K`, data.wowGtv),
-      kpiCard('Avg Order Value', `$${data.avgOrderValue.toFixed(2)}`, data.wowAov)
+      kpiCard('Tickets Sold', data.totalTickets.toLocaleString(), data.wowTickets, data.vsForecastTickets),
+      kpiCard('Orders', data.totalOrders.toLocaleString(), data.wowOrders, data.vsForecastOrders),
+      kpiCard('GTV', `$${(data.totalGtv / 1000).toFixed(1)}K`, data.wowGtv, data.vsForecastGtv),
+      kpiCard('Avg Order Value', `$${data.avgOrderValue.toFixed(2)}`, data.wowAov, data.vsForecastAov)
     ),
     // Two columns: sport breakdown + top events
     React.createElement(
@@ -102,7 +124,7 @@ export async function generateEmailImage(data: EmailImageData): Promise<Buffer> 
       // Sport breakdown
       React.createElement(
         'div',
-        { style: { flex: 1 } },
+        { style: { flex: 1, display: 'flex', flexDirection: 'column' as const } },
         React.createElement(
           'div',
           {
@@ -140,7 +162,7 @@ export async function generateEmailImage(data: EmailImageData): Promise<Buffer> 
       // Top events
       React.createElement(
         'div',
-        { style: { flex: 1 } },
+        { style: { flex: 1, display: 'flex', flexDirection: 'column' as const } },
         React.createElement(
           'div',
           {
@@ -207,11 +229,18 @@ async function loadDefaultFont(): Promise<ArrayBuffer> {
   return res.arrayBuffer();
 }
 
+export interface ForecastTotals {
+  totalTickets: number;
+  totalOrders: number;
+  totalGtv: number;
+}
+
 export function buildImageData(
   weekData: WeekData,
   prevWeekData: WeekData | null,
   sportData: Array<{ sport: string; tickets: number; gtv: number }>,
-  topEvents: Array<{ sport: string; eventName: string; gtv: number }>
+  topEvents: Array<{ sport: string; eventName: string; gtv: number }>,
+  forecast: ForecastTotals | null = null
 ): EmailImageData {
   const wowTickets =
     prevWeekData && prevWeekData.totalTickets > 0
@@ -234,6 +263,24 @@ export function buildImageData(
     ? ((avgOrderValue - prevAvgOrderValue) / prevAvgOrderValue) * 100
     : null;
 
+  const forecastAov =
+    forecast && forecast.totalOrders > 0 ? forecast.totalGtv / forecast.totalOrders : null;
+
+  const vsForecastTickets =
+    forecast && forecast.totalTickets > 0
+      ? ((weekData.totalTickets - forecast.totalTickets) / forecast.totalTickets) * 100
+      : null;
+  const vsForecastOrders =
+    forecast && forecast.totalOrders > 0
+      ? ((weekData.totalOrders - forecast.totalOrders) / forecast.totalOrders) * 100
+      : null;
+  const vsForecastGtv =
+    forecast && forecast.totalGtv > 0
+      ? ((weekData.totalGtv - forecast.totalGtv) / forecast.totalGtv) * 100
+      : null;
+  const vsForecastAov =
+    forecastAov && forecastAov > 0 ? ((avgOrderValue - forecastAov) / forecastAov) * 100 : null;
+
   return {
     weekStart: weekData.weekStart,
     totalTickets: weekData.totalTickets,
@@ -244,6 +291,10 @@ export function buildImageData(
     wowOrders,
     wowGtv,
     wowAov,
+    vsForecastTickets,
+    vsForecastOrders,
+    vsForecastGtv,
+    vsForecastAov,
     sportData,
     topEvents,
   };

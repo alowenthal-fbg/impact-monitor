@@ -8,6 +8,10 @@ export interface EmailTemplateData {
   wowOrders: number | null;
   wowGtv: number | null;
   wowAov: number | null;
+  vsForecastTickets: number | null;
+  vsForecastOrders: number | null;
+  vsForecastGtv: number | null;
+  vsForecastAov: number | null;
   narrative: string;
   dashboardUrl: string;
 }
@@ -32,16 +36,25 @@ export function generateSubjectLine(
 
 export { getISOWeekNumber as getWeekNumber } from '../utils/week';
 
-function renderKpiRow(label: string, value: string | number, wow: number | null): string {
+function renderKpiRow(
+  label: string,
+  value: string | number,
+  wow: number | null,
+  vsForecast: number | null
+): string {
   const displayValue = typeof value === 'number' ? value.toLocaleString() : value;
   const wowText = wow !== null ? `${wow > 0 ? '+' : ''}${wow.toFixed(1)}% WoW` : '';
   const wowColor = wow !== null && wow > 0 ? '#10b981' : '#ef4444';
+  const forecastText =
+    vsForecast !== null ? `${vsForecast > 0 ? '+' : ''}${vsForecast.toFixed(1)}% vs Forecast` : '';
+  const forecastColor = vsForecast !== null && vsForecast > 0 ? '#10b981' : '#ef4444';
 
   return `
     <div style="margin-bottom: 8px;">
       <p style="margin: 0 0 4px; color: #6b7280; font-size: 12px;">${label}</p>
       <p style="margin: 0; color: #111827; font-size: 20px; font-weight: bold;">${displayValue}</p>
       ${wowText ? `<p style="margin: 4px 0 0; color: ${wowColor}; font-size: 12px; font-weight: bold;">${wowText}</p>` : ''}
+      ${forecastText ? `<p style="margin: 2px 0 0; color: ${forecastColor}; font-size: 12px; font-weight: bold;">${forecastText}</p>` : ''}
     </div>
   `;
 }
@@ -84,18 +97,18 @@ export function buildEmailTemplate(data: EmailTemplateData): string {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td width="50%" style="padding-bottom: 20px;">
-                    ${renderKpiRow('Tickets Sold', data.totalTickets, data.wowTickets)}
+                    ${renderKpiRow('Tickets Sold', data.totalTickets, data.wowTickets, data.vsForecastTickets)}
                   </td>
                   <td width="50%" style="padding-bottom: 20px;">
-                    ${renderKpiRow('Orders', data.totalOrders, data.wowOrders)}
+                    ${renderKpiRow('Orders', data.totalOrders, data.wowOrders, data.vsForecastOrders)}
                   </td>
                 </tr>
                 <tr>
                   <td width="50%">
-                    ${renderKpiRow('GTV', `$${(data.totalGtv / 1000).toFixed(1)}K`, data.wowGtv)}
+                    ${renderKpiRow('GTV', `$${(data.totalGtv / 1000).toFixed(1)}K`, data.wowGtv, data.vsForecastGtv)}
                   </td>
                   <td width="50%">
-                    ${renderKpiRow('Avg Order Value', `$${data.avgOrderValue.toFixed(2)}`, data.wowAov)}
+                    ${renderKpiRow('Avg Order Value', `$${data.avgOrderValue.toFixed(2)}`, data.wowAov, data.vsForecastAov)}
                   </td>
                 </tr>
               </table>
