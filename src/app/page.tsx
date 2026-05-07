@@ -8,11 +8,14 @@ import { WeeklyTrendChart } from '@/components/weekly-trend-chart';
 import { WeekPaceChart } from '@/components/week-pace-chart';
 import { SportBreakdownPanel } from '@/components/sport-breakdown';
 import { SportSeasonalityChart } from '@/components/sport-seasonality-chart';
+import { TicketsTabTrendChart } from '@/components/tickets-tab-trend-chart';
+import { TabShareChart } from '@/components/tab-share-chart';
 import { TopEventsTable } from '@/components/top-events-table';
 import { PipelineStatus } from '@/components/pipeline-status';
 import { DashboardExport } from '@/components/dashboard-export';
 import { TalkTrackDownload } from '@/components/weekly-summary-download';
 import { SubscriberManager } from '@/components/subscriber-manager';
+import { useTicketingEngagement } from '@/hooks/use-ticketing-engagement';
 import { useWeeklyData, useAvailableWeeks } from '@/hooks/use-weekly-data';
 import { useYtdData } from '@/hooks/use-ytd-data';
 import { useTrendData } from '@/hooks/use-trend-data';
@@ -63,6 +66,7 @@ export default function DashboardPage() {
   );
   const { data: paceData, isLoading: paceLoading } = useWeekPace(currentWeekStart);
   const { data: pipelineStatus, isLoading: statusLoading } = usePipelineStatus();
+  const { data: engagementData, isLoading: engagementLoading } = useTicketingEngagement();
 
   // Compute vs-forecast deltas for the selected week
   const weekForecast = forecastData?.find(f => f.week_start === effectiveWeek);
@@ -236,7 +240,16 @@ export default function DashboardPage() {
         </div>
       </div>
       ) : (
-        <div className="mt-8 rounded-lg bg-white p-6 dark:bg-gray-900" />
+        <div className="mt-8 space-y-6">
+          <TicketsTabTrendChart
+            data={engagementData?.dailyTickets ?? []}
+            isLoading={engagementLoading}
+          />
+          <TabShareChart
+            data={engagementData?.tabShareL30 ?? []}
+            isLoading={engagementLoading}
+          />
+        </div>
       )}
 
       <div className="mt-12">

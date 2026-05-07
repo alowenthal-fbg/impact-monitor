@@ -61,10 +61,22 @@ CREATE TABLE forecast_metrics (
   UNIQUE(metric_date, source)
 );
 
+-- amplitude_ticketing_daily: daily unique users per bottom-nav tab from Amplitude
+CREATE TABLE amplitude_ticketing_daily (
+  metric_date DATE PRIMARY KEY,
+  tab_uniques_for_you INT,
+  tab_uniques_shop INT,
+  tab_uniques_games INT,
+  tab_uniques_scores INT,
+  tab_uniques_tickets INT,
+  pulled_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- Row Level Security
 ALTER TABLE daily_metrics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pipeline_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE amplitude_ticketing_daily ENABLE ROW LEVEL SECURITY;
 
 -- Anon key: read-only access
 CREATE POLICY "anon_read_daily_metrics" ON daily_metrics
@@ -92,4 +104,10 @@ CREATE POLICY "service_all_pipeline_runs" ON pipeline_runs
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 CREATE POLICY "service_all_subscribers" ON subscribers
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "anon_read_amplitude_ticketing_daily" ON amplitude_ticketing_daily
+  FOR SELECT TO anon USING (true);
+
+CREATE POLICY "service_all_amplitude_ticketing_daily" ON amplitude_ticketing_daily
   FOR ALL TO service_role USING (true) WITH CHECK (true);

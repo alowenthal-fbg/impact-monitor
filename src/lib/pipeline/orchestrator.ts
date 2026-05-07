@@ -1,5 +1,6 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { pullTicketmasterData } from '@/lib/pipeline/ticketmaster';
+import { pullAmplitudeData } from '@/lib/pipeline/amplitude';
 import { sendMondayEmail } from '@/lib/email/send';
 import { isMonday } from '@/lib/utils/week';
 import { format, startOfYear } from 'date-fns';
@@ -15,6 +16,7 @@ export interface PipelineResult {
   overallStatus: 'success' | 'failed';
   stages: {
     tmPull: StageResult;
+    amplitudePull: StageResult;
   };
   runId: string;
   startedAt: string;
@@ -73,7 +75,21 @@ export async function runFullPipeline(): Promise<PipelineResult> {
     completed_at: new Date().toISOString(),
   });
 
-  // Determine overall status
+  // Stage 2: Amplitude ticketing-traffic pull (non-fatal — tab-traffic is a
+  // secondary signal, so a failure shouldn't mark the whole pipeline as failed)
+  const amplitudePull = await runStage('amplitude_pull', () =>
+    pullAmplitudeData(30)
+  );
+
+  await supabase.from('pipeline_runs').insert({
+    started_at: startedAt,
+    stage: 'amplitude_pull',
+    status: amplitudePull.success ? 'success' : 'failed',
+    error_message: amplitudePull.error || null,
+    completed_at: new Date().toISOString(),
+  });
+
+  // Determine overall status — only tm_pull is load-bearing for commercial reporting
   const overallStatus = tmPull.success ? 'success' : 'failed';
 
   const completedAt = new Date().toISOString();
@@ -145,7 +161,7 @@ export async function runFullPipeline(): Promise<PipelineResult> {
 
   return {
     overallStatus,
-    stages: { tmPull },
+    stages: { tmPull, amplitudePull },
     runId: run.id,
     startedAt,
     completedAt,

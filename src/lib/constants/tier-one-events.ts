@@ -60,8 +60,22 @@ export const TIER_ONE_EVENTS: TierOneEvent[] = [
       return new Date(y, 8, laborDay.getDate() + 3);
     },
   },
+  {
+    label: 'NFL Single-Game Tickets On Sale',
+    sport: 'Football',
+    abbrev: 'Tix',
+    // Second Wednesday of May (approximates post-schedule-release on-sale)
+    getDate: (y) => nthWeekdayOfMonth(y, 4, 3, 2),
+  },
 
   // ── MLB ──────────────────────────────────────────────────────────────
+  {
+    label: 'MLB Single-Game Tickets On Sale',
+    sport: 'Baseball',
+    abbrev: 'Tix',
+    // Last Saturday of January (league-wide approximation)
+    getDate: (y) => lastWeekdayOfMonth(y, 0, 6),
+  },
   {
     label: 'MLB Opening Day',
     sport: 'Baseball',
@@ -100,6 +114,13 @@ export const TIER_ONE_EVENTS: TierOneEvent[] = [
     getDate: (y) => nthWeekdayOfMonth(y, 5, 4, 1),
   },
   {
+    label: 'NBA Single-Game Tickets On Sale',
+    sport: 'Basketball',
+    abbrev: 'Tix',
+    // Last Tuesday of August (league-wide approximation)
+    getDate: (y) => lastWeekdayOfMonth(y, 7, 2),
+  },
+  {
     label: 'NBA Season Opener',
     sport: 'Basketball',
     abbrev: 'Open',
@@ -114,6 +135,13 @@ export const TIER_ONE_EVENTS: TierOneEvent[] = [
     abbrev: 'WC',
     // January 1
     getDate: (y) => new Date(y, 0, 1),
+  },
+  {
+    label: 'NHL Single-Game Tickets On Sale',
+    sport: 'Hockey',
+    abbrev: 'Tix',
+    // Second Wednesday of September (approximates training-camp open)
+    getDate: (y) => nthWeekdayOfMonth(y, 8, 3, 2),
   },
   {
     label: 'Stanley Cup Finals',
