@@ -31,6 +31,17 @@ export function getCurrentWeek(): Date {
 }
 
 /**
+ * Returns the current week's Monday as a yyyy-MM-dd string in ET.
+ * Use this to filter out the in-progress week when selecting the most
+ * recently completed week from weekly_summary.
+ */
+export function getCurrentWeekStartString(): string {
+  const etNow = toZonedTime(new Date(), ET_TIMEZONE);
+  const weekStart = startOfWeek(etNow, { weekStartsOn: 1 });
+  return format(weekStart, 'yyyy-MM-dd');
+}
+
+/**
  * Returns true if the given date (or today) is a Monday in ET timezone.
  */
 export function isMonday(date?: Date): boolean {

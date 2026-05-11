@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { pullTicketmasterData } from '@/lib/pipeline/ticketmaster';
 import { pullAmplitudeData } from '@/lib/pipeline/amplitude';
 import { sendMondayEmail } from '@/lib/email/send';
-import { isMonday } from '@/lib/utils/week';
+import { isMonday, getCurrentWeekStartString } from '@/lib/utils/week';
 import { format, startOfYear } from 'date-fns';
 import type { WeekData } from '@/lib/ai/narrative';
 
@@ -109,9 +109,12 @@ export async function runFullPipeline(): Promise<PipelineResult> {
     });
 
     try {
+      // Exclude the in-progress week so the email reports the most
+      // recently completed week (Mon–Sun), not today's partial data.
       const { data: weekRows } = await supabase
         .from('weekly_summary')
         .select('*')
+        .lt('week_start', getCurrentWeekStartString())
         .order('week_start', { ascending: false })
         .limit(2);
 

@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { sendMondayEmail } from '@/lib/email/send';
 import { successResponse, errorResponse } from '@/lib/utils/api';
 import { isValidEmail } from '@/lib/utils/validation';
+import { getCurrentWeekStartString } from '@/lib/utils/week';
 import type { WeekData } from '@/lib/ai/narrative';
 
 export async function POST(request: NextRequest) {
@@ -26,10 +27,12 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServerClient();
 
-    // Pull the two most recent weeks to populate the email
+    // Pull the two most recent completed weeks — exclude the in-progress
+    // week so the test email matches what the real Monday send will produce.
     const { data: weekRows, error: weekError } = await supabase
       .from('weekly_summary')
       .select('*')
+      .lt('week_start', getCurrentWeekStartString())
       .order('week_start', { ascending: false })
       .limit(2);
 
