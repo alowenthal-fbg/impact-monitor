@@ -146,34 +146,49 @@ interface PromptParts {
 }
 
 function buildCompletedWeekPrompt(p: PromptParts): string {
-  const { weekData, prevWeekData, sportBreakdownText, topEventsText, wowTickets, wowOrders, wowGtv, wowAov, avgOrderValue, fmtWow } = p;
+  const { weekData, prevWeekData, sportBreakdownText, topEventsText, wowTickets, wowGtv, wowAov, avgOrderValue, fmtWow } = p;
 
-  return `You are an analytics lead preparing a verbal update script for a Weekly Business Review (WBR).
+  // Compute share-of-total stats so the prompt can feed the model ready-to-cite framing
+  const totalGtv = weekData.totalGtv;
+  const topEventSharesText = (() => {
+    const parts = topEventsText.split('\n').filter(Boolean);
+    if (parts.length === 0) return '';
+    // No-op: the raw GTV per event is already in topEventsText; we pass a note
+    // so the model knows to compute share-of-total itself from the data shown.
+    return `(When citing a top event, convert its GTV into a share of the week's $${(totalGtv / 1000).toFixed(1)}K total — e.g. "accounted for over X% of overall GTV".)`;
+  })();
+
+  return `You are the analytics lead writing the Weekly Summary that appears when a user clicks the Weekly Summary button on the dashboard. The audience is senior commercial stakeholders who already have the KPIs in front of them on the dashboard.
 
 **Current Week (${weekData.weekStart}):**
 - Tickets sold: ${weekData.totalTickets.toLocaleString()}${fmtWow(wowTickets)}
-- Orders: ${weekData.totalOrders.toLocaleString()}${fmtWow(wowOrders)}
 - GTV: $${(weekData.totalGtv / 1000).toFixed(1)}K${fmtWow(wowGtv)}
 - Avg Order Value: $${avgOrderValue.toFixed(2)}${fmtWow(wowAov)}
 
 **Previous Week:**
-${prevWeekData ? `- Tickets: ${prevWeekData.totalTickets.toLocaleString()}, Orders: ${prevWeekData.totalOrders.toLocaleString()}, GTV: $${(prevWeekData.totalGtv / 1000).toFixed(1)}K` : 'No prior week data available'}
+${prevWeekData ? `- Tickets: ${prevWeekData.totalTickets.toLocaleString()}, GTV: $${(prevWeekData.totalGtv / 1000).toFixed(1)}K` : 'No prior week data available'}
 
 **Sport Breakdown (Current Week):**
 ${sportBreakdownText || '  No sport data available'}
 
 **Top 5 Events by GTV:**
 ${topEventsText || '  No event data available'}
+${topEventSharesText}
 
-Structure your talk track with these sections:
+Write the summary in exactly this structure, as plain text (no markdown, no headers, no bullet prefixes like "-" or "*"):
 
-1. **Headline Summary** (1-2 sentences): High-level performance snapshot with key WoW trend
-2. **KPI Callouts** (3-4 sentences): Specific numbers for tickets, orders, GTV, AOV with context
-3. **Key Drivers** (2-3 sentences): Analyze what drove the results — sport mix changes, marquee events, demand shifts
-4. **Context & Takeaway** (1-2 sentences): What this means for the business
-5. **Forward-Looking** (1-2 sentences): What to watch for next week
+1. ONE opening sentence with the single most important headline stat — pick the more striking of tickets WoW or GTV crossing a threshold. Do not greet the reader. Do not say "here's the read on the week" or "this week we saw…". Just state the fact.
 
-Write in a conversational, confident tone suitable for verbal delivery. Use numbers strategically (cite WoW deltas, top sports, marquee events). Keep the total length to 10-15 sentences. Do not use markdown formatting or section headers in the output — just write the script as a flowing narrative.`;
+2. A blank line, then 2 to 3 short driver lines, each on its own line (no bullet prefix). Each line ties a sport or a specific event to a concrete share-of-total or contribution stat. Prefer share-of-total framing ("accounted for over 20% of overall GTV", "contributed 59% of ticket volume") over rank framing ("our top event", "the 5th ranked event"). Each line must add distinct information — do not restate the opener.
+
+3. A blank line, then ONE single-sentence synthesis line — the "so what" that interprets the drivers for the business. Examples of the shape (do not copy verbatim): "The business is broadening, not trading off." "Volume growth is outpacing price, which tells us we're widening the funnel rather than trading up."
+
+Hard rules:
+- Do NOT recite KPIs that are already on the dashboard (orders count, AOV dollar, every WoW delta). Use one or two numbers in the opener only if they anchor the headline.
+- Do NOT write a "Looking ahead" or "What to watch" section. A human adds that separately.
+- Do NOT use filler adjectives like "solid", "healthy", "strong", "robust", "impressive" unless paired with a stat that earns the word.
+- Do NOT use filler transitions like "Digging into the drivers…", "The takeaway is…", "Overall…".
+- Write tight, confident, declarative sentences. Target 5-8 sentences total across all three parts.`;
 }
 
 function buildLiveWeekPrompt(p: PromptParts & { liveContext: LiveWeekContext }): string {

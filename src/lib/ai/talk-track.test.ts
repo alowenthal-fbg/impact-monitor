@@ -223,8 +223,41 @@ describe('generateTalkTrack', () => {
       await generateTalkTrack(weekData, prevWeekData, sportData, topEvents, null);
 
       const prompt = mockCreate.mock.calls[0][0].messages[0].content;
-      expect(prompt).toContain('Weekly Business Review (WBR)');
+      expect(prompt).toContain('Weekly Summary');
       expect(prompt).not.toContain('mid-week');
+    });
+  });
+
+  describe('completed-week voice rules', () => {
+    it('instructs the model to skip a Looking Ahead section', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Summary.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents);
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toMatch(/do NOT write a "Looking ahead"/i);
+    });
+
+    it('instructs the model to use share-of-total framing over rank framing', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Summary.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents);
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toMatch(/share-of-total/i);
+    });
+
+    it('instructs the model to avoid KPI recitation and filler adjectives', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: 'text', text: 'Summary.' }],
+      });
+
+      await generateTalkTrack(weekData, prevWeekData, sportData, topEvents);
+      const prompt = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toMatch(/do NOT recite KPIs/i);
+      expect(prompt).toMatch(/solid|healthy|strong/);
     });
   });
 });
